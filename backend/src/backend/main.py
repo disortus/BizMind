@@ -51,7 +51,11 @@ def root():
     return {
         "service": "BizMind Backend API",
         "status": "online",
-        "demo_organization": "Кофейня «Cafe Aroma»",
+        "version": "1.0.0",
+        "demo_cases": [
+            "Case A: Cafe Aroma (Initial Adoption / Migration)",
+            "Case B: Daily Cup (Regular Usage / Growth)"
+        ],
         "docs_url": "/docs",
     }
 
