@@ -24,27 +24,24 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [activeProductId, setActiveProductId] = useState<number>(
-    selectedProductId || 1
+    selectedProductId || 0
   );
   const [quantity, setQuantity] = useState<number>(20);
   const [comparison, setComparison] = useState<PriceComparison | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch products list on mount
+  // Fetch products list on mount / refresh
   useEffect(() => {
     api.getProducts().then((res) => {
       setProducts(res);
-      if (!selectedProductId && res.length > 0) {
-        setActiveProductId(res[0].id);
+      if (res.length > 0) {
+        if (!selectedProductId || !res.some((p) => p.id === selectedProductId)) {
+          setActiveProductId(res[0].id);
+        } else {
+          setActiveProductId(selectedProductId);
+        }
       }
     });
-  }, []);
-
-  // Sync if prop changed
-  useEffect(() => {
-    if (selectedProductId) {
-      setActiveProductId(selectedProductId);
-    }
   }, [selectedProductId]);
 
   // Fetch comparison data whenever product or quantity changes

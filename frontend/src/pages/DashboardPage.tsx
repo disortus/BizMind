@@ -48,7 +48,6 @@ const CATEGORY_COLORS = [
 export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate }) => {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [interactiveQty, setInteractiveQty] = useState(20);
 
   useEffect(() => {
     setLoading(true);
@@ -77,18 +76,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
     );
   }
 
-  // Interactive calculation for coffee widget
-  const coffeeComp = data.featured_comparison;
-  const currentPrice = coffeeComp?.current_unit_price || 11500;
-  const altPrice = coffeeComp?.best_offer?.offered_price || 10350;
-  const unitDiff = currentPrice - altPrice;
+  // Dynamic calculation for featured comparison widget
+  const featuredComp = data.featured_comparison;
+  const isPackaging = featuredComp?.unit === 'упак';
+  const defaultQty = isPackaging ? 50 : 20;
+  const [interactiveQty, setInteractiveQty] = useState(defaultQty);
+
+  // Sync default quantity when featuredComp changes (e.g. on org switch)
+  useEffect(() => {
+    if (featuredComp) {
+      setInteractiveQty(featuredComp.selected_quantity || (featuredComp.unit === 'упак' ? 50 : 20));
+    }
+  }, [featuredComp?.product_id]);
+
+  const currentPrice = featuredComp?.current_unit_price || 0;
+  const altPrice = featuredComp?.best_offer?.offered_price || 0;
+  const unitDiff = Math.max(0, currentPrice - altPrice);
   const calculatedSavings = unitDiff * interactiveQty;
 
   return (
     <div className="p-8 space-y-6 max-w-7xl mx-auto">
       {/* 1. Price Spike Highlight Banner */}
       <PriceAlertBanner
-        onGoToComparison={() => onNavigate('comparison', 1)}
+        featuredComp={featuredComp}
+        onGoToComparison={(pid) => onNavigate('comparison', pid || featuredComp?.product_id)}
       />
 
       {/* 2. Key Metrics Row */}
@@ -384,7 +395,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
       </div>
 
       {/* 4. Interactive Supplier Comparison Mini-Tool */}
-      {coffeeComp && (
+      {featuredComp && featuredComp.best_offer && (
         <div className="p-6 rounded-2xl bg-[#161F30] border border-[#243045] relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
@@ -394,15 +405,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
                   Экспресс-калькулятор закупки
                 </span>
                 <span className="text-xs text-slate-400 font-mono">
-                  {coffeeComp.product_name}
+                  {featuredComp.product_name}
                 </span>
               </div>
               <h3 className="text-base font-bold text-white">
-                Расчет потенциальной разницы при смене поставщика кофе
+                Расчет потенциальной разницы при смене поставщика
               </h3>
               <p className="text-xs text-slate-400 mt-1 max-w-xl">
-                Текущий поставщик <strong className="text-slate-200">{coffeeComp.current_supplier_name}</strong> ({formatTenge(coffeeComp.current_unit_price)}/кг) 
-                против альтернативы <strong className="text-emerald-400">{coffeeComp.best_offer?.supplier_name}</strong> ({formatTenge(coffeeComp.best_offer?.offered_price)}/кг).
+                Текущий поставщик <strong className="text-slate-200">{featuredComp.current_supplier_name}</strong> ({formatTenge(featuredComp.current_unit_price)}/{featuredComp.unit}) 
+                против альтернативы <strong className="text-emerald-400">{featuredComp.best_offer.supplier_name}</strong> ({formatTenge(featuredComp.best_offer.offered_price)}/{featuredComp.unit}).
               </p>
             </div>
 
@@ -412,22 +423,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>Объем закупки:</span>
                   <span className="font-mono text-emerald-400 font-bold">
-                    {interactiveQty} {coffeeComp.unit}
+                    {interactiveQty} {featuredComp.unit}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="5"
-                  max="100"
-                  step="5"
+                  min={isPackaging ? 10 : 5}
+                  max={isPackaging ? 200 : 100}
+                  step={isPackaging ? 10 : 5}
                   value={interactiveQty}
                   onChange={(e) => setInteractiveQty(Number(e.target.value))}
                   className="w-48 accent-emerald-500 cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>5 кг</span>
-                  <span>50 кг</span>
-                  <span>100 кг</span>
+                  <span>{isPackaging ? '10 упак' : '5 кг'}</span>
+                  <span>{isPackaging ? '100 упак' : '50 кг'}</span>
+                  <span>{isPackaging ? '200 упак' : '100 кг'}</span>
                 </div>
               </div>
 
@@ -437,15 +448,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
                   {formatTenge(calculatedSavings)}
                 </div>
                 <div className="text-[10px] text-slate-500">
-                  ({formatTenge(unitDiff)} на 1 {coffeeComp.unit})
+                  ({formatTenge(unitDiff)} на 1 {featuredComp.unit})
                 </div>
               </div>
 
               <button
-                onClick={() => onNavigate('comparison', coffeeComp.product_id)}
+                onClick={() => onNavigate('comparison', featuredComp.product_id)}
                 className="px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md transition"
               >
-                <span>Перейти</span>
+                <span>Сравнить</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

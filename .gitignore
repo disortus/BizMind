@@ -74,3 +74,21 @@ lerna-debug.log*
 # Системные файлы (Linux / macOS / Windows)
 .DS_Store
 Thumbs.db
+
+# =========================
+# Docker & Compose
+# =========================
+# Локальные оверлеи compose (создаются для локальной отладки под конкретную машину)
+docker-compose.override.yml
+compose.override.yml
+
+# Папки для монтирования томов баз данных и хранилищ на хосте (bind mounts)
+# Если вы пробрасываете тома вроде ./data/postgres:/var/lib/postgresql/data
+/data/
+/pgdata/
+/mongo_data/
+/redis_data/
+
+# Логи работы контейнеров, если они пишутся в локальную папку
+/logs/
+*.log
