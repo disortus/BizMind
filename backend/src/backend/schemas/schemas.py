@@ -16,6 +16,24 @@ class OrganizationResponse(BaseModel):
         from_attributes = True
 
 
+class OrganizationInfo(BaseModel):
+    id: int
+    name: str
+    business_type: str
+    scenario_type: str  # "initial_adoption" | "regular_usage"
+    scenario_title: str  # "Первоначальное внедрение" | "Регулярное использование"
+    scenario_description: str
+    demo_badge: str
+    user_name: str
+    user_email: str
+    user_role: str
+    created_at: datetime
+
+
+class OrganizationSwitchRequest(BaseModel):
+    organization_id: int
+
+
 class UserResponse(BaseModel):
     id: int
     name: str

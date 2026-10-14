@@ -1,10 +1,21 @@
+import os
 from pathlib import Path
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Place db file in backend root or designated dir
-DB_PATH = Path(__file__).resolve().parent.parent.parent / "bizmind.db"
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
+# Support DATABASE_URL or custom sqlite path via env var (crucial for Docker persistent volumes)
+DATABASE_URL_ENV = os.getenv("DATABASE_URL")
+if DATABASE_URL_ENV:
+    SQLALCHEMY_DATABASE_URL = DATABASE_URL_ENV
+else:
+    db_path_env = os.getenv("DATABASE_PATH")
+    if db_path_env:
+        DB_PATH = Path(db_path_env)
+    else:
+        DB_PATH = Path(__file__).resolve().parent.parent.parent / "bizmind.db"
+    
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
