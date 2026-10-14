@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import get_db
+from backend.api.deps import get_current_organization_id
 from backend.schemas.schemas import (
     ImportPreviewResult,
     ImportExecuteResult,
@@ -23,6 +24,7 @@ async def preview_import(
 async def execute_import(
     file: UploadFile = File(...),
     import_type: str = Form("finances"),
+    organization_id: int = Depends(get_current_organization_id),
     db: Session = Depends(get_db),
 ):
     content = await file.read()
@@ -31,9 +33,12 @@ async def execute_import(
         file_bytes=content,
         filename=file.filename or "upload.xlsx",
         import_type=import_type,
-        organization_id=1,
+        organization_id=organization_id,
     )
 
 @router.get("/batches", response_model=List[ImportBatchResponse])
-def get_batches(db: Session = Depends(get_db)):
-    return ImportService.get_batches(db=db, organization_id=1)
+def get_batches(
+    organization_id: int = Depends(get_current_organization_id),
+    db: Session = Depends(get_db)
+):
+    return ImportService.get_batches(db=db, organization_id=organization_id)
