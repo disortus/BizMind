@@ -5,6 +5,20 @@ export interface Organization {
   created_at: string;
 }
 
+export interface OrganizationInfo {
+  id: number;
+  name: string;
+  business_type: string;
+  scenario_type: 'initial_adoption' | 'regular_usage';
+  scenario_title: string;
+  scenario_description: string;
+  demo_badge: string;
+  user_name: string;
+  user_email: string;
+  user_role: string;
+  created_at: string;
+}
+
 export interface User {
   id: number;
   name: string;

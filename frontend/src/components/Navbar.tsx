@@ -4,7 +4,7 @@ import {
   Plus,
   RotateCcw,
   Bell,
-  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '../utils/formatters';
 
@@ -17,6 +17,8 @@ interface NavbarProps {
   onResetDemo: () => void;
   onOpenNotifications: () => void;
   unreadCount: number;
+  currentOrgName: string;
+  scenarioTitle: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,6 +30,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onResetDemo,
   onOpenNotifications,
   unreadCount,
+  currentOrgName,
+  scenarioTitle,
 }) => {
   const periods = [
     { id: '30d', label: '30 дней' },
@@ -37,17 +41,33 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="h-16 px-8 border-b border-[#1E293B] bg-[#0F172A]/80 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between">
-      {/* Title & context */}
-      <div>
-        <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-          {title}
-        </h1>
-        <p className="text-xs text-slate-400">{subtitle}</p>
+    <header className="h-16 px-6 border-b border-[#1E293B] bg-[#0F172A]/80 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between">
+      {/* Title & Organization Context */}
+      <div className="flex items-center gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              {title}
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+                {currentOrgName}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300">
+                {scenarioTitle}
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Демонстрационные данные
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400">{subtitle}</p>
+        </div>
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Period Selector Pills */}
         <div className="flex items-center bg-[#161F30] p-1 rounded-lg border border-[#243045]">
           <Calendar className="w-3.5 h-3.5 text-slate-400 ml-2 mr-1" />
@@ -58,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={p.id}
                 onClick={() => onPeriodChange(p.id)}
                 className={cn(
-                  'px-2.5 py-1 text-xs font-medium rounded-md transition-all',
+                  'px-2 py-1 text-xs font-medium rounded-md transition-all',
                   active
                     ? 'bg-emerald-500 text-slate-950 font-semibold shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {
   User,
+  OrganizationInfo,
   DashboardSummary,
   FinancialTransaction,
   FinanceSummary,
@@ -24,11 +25,37 @@ const client = axios.create({
   },
 });
 
+// Interceptor to attach the active organization header dynamically
+client.interceptors.request.use((config) => {
+  const orgId = localStorage.getItem('bizmind_org_id') || '1';
+  config.headers['X-Organization-Id'] = orgId;
+  return config;
+});
+
 export const api = {
-  // Auth
-  demoLogin: async (): Promise<User> => {
-    const res = await client.post<User>('/auth/demo-login');
+  // Auth & Organizations
+  getOrganizations: async (): Promise<OrganizationInfo[]> => {
+    const res = await client.get<OrganizationInfo[]>('/auth/organizations');
     return res.data;
+  },
+  demoLogin: async (orgId?: number): Promise<User> => {
+    if (orgId) {
+      localStorage.setItem('bizmind_org_id', String(orgId));
+    }
+    const targetOrg = orgId || Number(localStorage.getItem('bizmind_org_id') || '1');
+    const res = await client.post<User>(`/auth/demo-login?org_id=${targetOrg}`);
+    if (res.data?.organization?.id) {
+      localStorage.setItem('bizmind_org_id', String(res.data.organization.id));
+    }
+    return res.data;
+  },
+  switchOrganization: async (organizationId: number): Promise<User> => {
+    localStorage.setItem('bizmind_org_id', String(organizationId));
+    const res = await client.post<User>('/auth/switch-org', { organization_id: organizationId });
+    return res.data;
+  },
+  getActiveOrgId: (): number => {
+    return Number(localStorage.getItem('bizmind_org_id') || '1');
   },
   getMe: async (): Promise<User> => {
     const res = await client.get<User>('/auth/me');

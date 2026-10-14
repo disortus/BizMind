@@ -11,10 +11,12 @@ import { ForecastPage } from './pages/ForecastPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ImportSettingsPage } from './pages/ImportSettingsPage';
 import { api } from './services/api';
-import { User } from './types';
+import { User, OrganizationInfo } from './types';
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [organizations, setOrganizations] = useState<OrganizationInfo[]>([]);
+  const [currentOrgId, setCurrentOrgId] = useState<number>(api.getActiveOrgId());
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [period, setPeriod] = useState<string>('30d');
@@ -24,19 +26,25 @@ export function App() {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Check login state on initial mount
+  // Check login state and load available organizations on initial mount
   useEffect(() => {
-    api.getMe()
-      .then((u) => {
-        setUser(u);
-      })
-      .catch(() => {
-        // Fallback: stay on login page or auto-login
+    Promise.all([
+      api.getOrganizations().catch(() => []),
+      api.getMe().catch(() => null),
+    ])
+      .then(([orgs, u]) => {
+        setOrganizations(orgs);
+        if (u) {
+          setUser(u);
+          if (u.organization?.id) {
+            setCurrentOrgId(u.organization.id);
+          }
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
-  // Fetch categories and unread notifications count
+  // Fetch categories and unread notifications count whenever user, org, or refreshKey changes
   const refreshAuxData = async () => {
     try {
       const [cats, notifs] = await Promise.all([
@@ -54,7 +62,7 @@ export function App() {
     if (user) {
       refreshAuxData();
     }
-  }, [user, refreshKey]);
+  }, [user, currentOrgId, refreshKey]);
 
   const handleNavigate = (tab: string, productId?: number) => {
     if (productId !== undefined) {
@@ -66,6 +74,22 @@ export function App() {
 
   const handleDataChanged = () => {
     setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleSwitchOrg = async (newOrgId: number) => {
+    try {
+      setLoading(true);
+      const switchedUser = await api.switchOrganization(newOrgId);
+      setCurrentOrgId(newOrgId);
+      setUser(switchedUser);
+      setSelectedProductId(null);
+      // Increment refreshKey to clear and reload state on all screens
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error('Failed to switch organization', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -80,20 +104,38 @@ export function App() {
   }
 
   if (!user) {
-    return <LoginPage onLoginSuccess={(u) => setUser(u)} />;
+    return (
+      <LoginPage
+        onLoginSuccess={(u) => {
+          setUser(u);
+          if (u.organization?.id) {
+            setCurrentOrgId(u.organization.id);
+          }
+          api.getOrganizations().then(setOrganizations).catch(() => {});
+        }}
+      />
+    );
   }
 
+  const currentOrgMeta = organizations.find((o) => o.id === currentOrgId) || {
+    id: currentOrgId,
+    name: user.organization?.name || (currentOrgId === 1 ? 'Cafe Aroma' : 'Daily Cup'),
+    scenario_title: currentOrgId === 1 ? 'Первоначальное внедрение' : 'Регулярное использование',
+    demo_badge: currentOrgId === 1 ? 'Первоначальное внедрение' : 'Регулярное использование',
+  };
+
   const getPageInfo = () => {
+    const orgLabel = currentOrgMeta.name;
     switch (activeTab) {
       case 'dashboard':
         return {
           title: 'Сводный дашборд',
-          subtitle: 'Финансовое состояние и операционный контроль Cafe Aroma',
+          subtitle: `Финансовое состояние и операционный контроль ${orgLabel}`,
         };
       case 'finances':
         return {
           title: 'Финансовые операции',
-          subtitle: 'Журнал доходов и расходов предприятия за выбранный период',
+          subtitle: `Журнал доходов и расходов предприятия ${orgLabel} за выбранный период`,
         };
       case 'purchases':
         return {
@@ -118,7 +160,7 @@ export function App() {
       case 'import':
         return {
           title: 'Импорт и управление данными',
-          subtitle: 'Загрузка внешних таблиц Excel/CSV и управление демо-базой',
+          subtitle: `Загрузка внешних таблиц Excel/CSV и управление базой ${orgLabel}`,
         };
       default:
         return {
@@ -140,6 +182,10 @@ export function App() {
           setActiveTab(tab);
         }}
         unreadCount={unreadCount}
+        user={user}
+        currentOrgId={currentOrgId}
+        organizations={organizations}
+        onSwitchOrg={handleSwitchOrg}
       />
 
       {/* Main Content Area */}
@@ -153,12 +199,14 @@ export function App() {
           onResetDemo={() => handleNavigate('import')}
           onOpenNotifications={() => handleNavigate('notifications')}
           unreadCount={unreadCount}
+          currentOrgName={currentOrgMeta.name}
+          scenarioTitle={currentOrgMeta.scenario_title}
         />
 
         <main className="flex-1 pb-16">
           {activeTab === 'dashboard' && (
             <DashboardPage
-              key={`dash-${refreshKey}-${period}`}
+              key={`dash-${currentOrgId}-${refreshKey}-${period}`}
               period={period}
               onNavigate={handleNavigate}
             />
@@ -166,14 +214,14 @@ export function App() {
 
           {activeTab === 'finances' && (
             <FinancesPage
-              key={`fin-${refreshKey}`}
+              key={`fin-${currentOrgId}-${refreshKey}`}
               onOpenAddModal={() => setIsAddModalOpen(true)}
             />
           )}
 
           {activeTab === 'purchases' && (
             <PurchasesPage
-              key={`purch-${refreshKey}`}
+              key={`purch-${currentOrgId}-${refreshKey}`}
               initialProductId={selectedProductId}
               onGoToComparison={(pid) => handleNavigate('comparison', pid)}
             />
@@ -181,21 +229,21 @@ export function App() {
 
           {activeTab === 'comparison' && (
             <ComparisonPage
-              key={`comp-${selectedProductId}-${refreshKey}`}
+              key={`comp-${currentOrgId}-${selectedProductId}-${refreshKey}`}
               selectedProductId={selectedProductId}
             />
           )}
 
           {activeTab === 'forecast' && (
             <ForecastPage
-              key={`fore-${refreshKey}`}
+              key={`fore-${currentOrgId}-${refreshKey}`}
               onGoToComparison={(pid) => handleNavigate('comparison', pid)}
             />
           )}
 
           {activeTab === 'notifications' && (
             <NotificationsPage
-              key={`notif-${refreshKey}`}
+              key={`notif-${currentOrgId}-${refreshKey}`}
               onNavigate={handleNavigate}
               onRefreshUnread={refreshAuxData}
             />
@@ -203,7 +251,7 @@ export function App() {
 
           {activeTab === 'import' && (
             <ImportSettingsPage
-              key={`import-${refreshKey}`}
+              key={`import-${currentOrgId}-${refreshKey}`}
               onDataImported={handleDataChanged}
             />
           )}
@@ -221,7 +269,14 @@ export function App() {
         categories={
           categories.length > 0
             ? categories.filter((c) => c !== 'Все')
-            : ['Закупка кофе', 'Закупка молока и продуктов', 'Расходные материалы', 'Аренда помещения']
+            : [
+                'Закупка кофе',
+                'Закупка молока и продуктов',
+                'Расходные материалы',
+                'Аренда помещения',
+                'Фонд оплаты труда',
+                'Коммунальные услуги',
+              ]
         }
       />
     </div>
