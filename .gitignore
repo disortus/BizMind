@@ -1,0 +1,76 @@
+# =========================
+# Окружение и секреты
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# =========================
+# Backend (Python / FastAPI / uv)
+# =========================
+# Виртуальное окружение (uv по умолчанию создает .venv)
+.venv/
+venv/
+env/
+
+# Кэш Python и байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Кэш линтеров, типизации и тестов
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Сборка пакетов
+build/
+dist/
+*.egg-info/
+
+# # Локальные базы данных для разработки
+# *.db
+# *.sqlite
+# *.sqlite3
+
+# =========================
+# Frontend (React / TypeScript)
+# =========================
+# Зависимости
+node_modules/
+
+# Сборка продакшена (Vite / CRA)
+dist/
+dist-ssr/
+build/
+
+# Кэш TypeScript и сборщиков
+*.tsbuildinfo
+.eslintcache
+.vite/
+.parcel-cache/
+
+# Логи пакетных менеджеров
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =========================
+# IDE и ОС
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Системные файлы (Linux / macOS / Windows)
+.DS_Store
+Thumbs.db
