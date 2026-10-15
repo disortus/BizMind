@@ -1,8 +1,16 @@
 from datetime import date, timedelta
 from pathlib import Path
 import pandas as pd
+import os
 
-DEMO_DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_data"
+# DEMO_DATA_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_data"
+# DEMO_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# In Docker: defaults to /app/data/demo_data
+# Outside Docker: falls back to repo_root/demo_data
+_DEFAULT_DEMO_DIR = Path(__file__).resolve().parents[4] / "demo_data"
+DEMO_DATA_DIR = Path(os.getenv("DEMO_DATA_DIR", _DEFAULT_DEMO_DIR))
+
 DEMO_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 def generate_all_excel_files():
