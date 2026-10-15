@@ -48,21 +48,38 @@ const CATEGORY_COLORS = [
 export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate }) => {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [interactiveQty, setInteractiveQty] = useState(20);
 
   useEffect(() => {
     setLoading(true);
     api.getDashboard(period)
-      .then((res) => setData(res))
+      .then((res) => {
+        setData(res);
+        const feat = res.featured_comparison;
+        if (feat) {
+          setInteractiveQty(feat.selected_quantity || (feat.unit === 'упак' ? 50 : 20));
+        }
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [period]);
+
+  const featuredComp = data?.featured_comparison;
+  const isPackaging = featuredComp?.unit === 'упак';
+
+  // Sync default quantity when featuredComp changes (e.g. on org switch)
+  useEffect(() => {
+    if (featuredComp) {
+      setInteractiveQty(featuredComp.selected_quantity || (featuredComp.unit === 'упак' ? 50 : 20));
+    }
+  }, [featuredComp?.product_id, featuredComp?.unit]);
 
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-          <p className="text-xs text-slate-400">Загрузка аналитических данных Cafe Aroma...</p>
+          <p className="text-xs text-slate-400">Загрузка аналитических данных...</p>
         </div>
       </div>
     );
@@ -75,19 +92,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
       </div>
     );
   }
-
-  // Dynamic calculation for featured comparison widget
-  const featuredComp = data.featured_comparison;
-  const isPackaging = featuredComp?.unit === 'упак';
-  const defaultQty = isPackaging ? 50 : 20;
-  const [interactiveQty, setInteractiveQty] = useState(defaultQty);
-
-  // Sync default quantity when featuredComp changes (e.g. on org switch)
-  useEffect(() => {
-    if (featuredComp) {
-      setInteractiveQty(featuredComp.selected_quantity || (featuredComp.unit === 'упак' ? 50 : 20));
-    }
-  }, [featuredComp?.product_id]);
 
   const currentPrice = featuredComp?.current_unit_price || 0;
   const altPrice = featuredComp?.best_offer?.offered_price || 0;

@@ -27,8 +27,10 @@ const client = axios.create({
 
 // Interceptor to attach the active organization header dynamically
 client.interceptors.request.use((config) => {
-  const orgId = localStorage.getItem('bizmind_org_id') || '1';
-  config.headers['X-Organization-Id'] = orgId;
+  const orgId = localStorage.getItem('bizmind_org_id');
+  if (orgId) {
+    config.headers['X-Organization-Id'] = orgId;
+  }
   return config;
 });
 
@@ -56,6 +58,12 @@ export const api = {
   },
   getActiveOrgId: (): number => {
     return Number(localStorage.getItem('bizmind_org_id') || '1');
+  },
+  hasSavedOrg: (): boolean => {
+    return Boolean(localStorage.getItem('bizmind_org_id'));
+  },
+  logout: (): void => {
+    localStorage.removeItem('bizmind_org_id');
   },
   getMe: async (): Promise<User> => {
     const res = await client.get<User>('/auth/me');
