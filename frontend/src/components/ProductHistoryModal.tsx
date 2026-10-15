@@ -39,8 +39,8 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
   if (!productId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-2xl bg-[#161F30] border border-[#243045] rounded-2xl shadow-2xl p-6 overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl bg-[#161F30] border border-[#243045] rounded-2xl shadow-2xl p-4 sm:p-6 overflow-hidden max-h-[92dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#243045]">
           <div>
@@ -62,9 +62,9 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
         {loading ? (
           <div className="py-20 text-center text-slate-500 text-xs">Загрузка истории цен...</div>
         ) : data ? (
-          <div className="mt-4 space-y-6 overflow-y-auto pr-1">
+          <div className="mt-4 space-y-5 sm:space-y-6 overflow-y-auto pr-1">
             {/* Price Stats Cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               <div className="p-3.5 rounded-xl bg-[#0B0F17] border border-[#243045]">
                 <div className="text-[11px] text-slate-400">Последняя цена</div>
                 <div className="text-lg font-bold text-white font-mono mt-0.5">
@@ -106,7 +106,7 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
                 <span>График изменения закупочной цены</span>
                 <span className="text-[11px] text-slate-500 font-normal">₸ / {data.unit}</span>
               </div>
-              <div className="h-52 w-full">
+              <div className="h-44 sm:h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={data.history}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" vertical={false} />
@@ -156,7 +156,7 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
             </div>
 
             {/* Action Bar */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/30 to-[#161F30] border border-emerald-500/20 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/30 to-[#161F30] border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="text-xs font-bold text-white">Есть предложения других поставщиков?</div>
                 <div className="text-[11px] text-slate-400">
@@ -168,7 +168,7 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
                   onClose();
                   onGoToComparison(data.product_id);
                 }}
-                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition"
+                className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 transition"
               >
                 <span>Сравнить поставщиков</span>
                 <ArrowRight className="w-3.5 h-3.5" />

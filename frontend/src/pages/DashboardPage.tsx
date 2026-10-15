@@ -99,7 +99,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
   const calculatedSavings = unitDiff * interactiveQty;
 
   return (
-  return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* 1. Price Spike Highlight Banner */}
       <PriceAlertBanner
