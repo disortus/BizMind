@@ -25,29 +25,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] flex flex-col justify-center items-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0B0F17] flex flex-col justify-center items-center p-4 sm:p-6 py-8 sm:py-12 relative overflow-hidden">
       {/* Background glow effects */}
       <div className="absolute top-1/4 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 -right-24 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-4xl z-10 space-y-8">
+      <div className="w-full max-w-4xl z-10 space-y-6 sm:space-y-8">
         {/* Brand */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-xl shadow-emerald-500/20">
-              <Sparkles className="w-6 h-6 text-slate-950 font-bold" />
+          <div className="inline-flex items-center gap-2.5 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-xl shadow-emerald-500/20">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950 font-bold" />
             </div>
-            <span className="text-3xl font-extrabold text-white tracking-tight">
+            <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               BizMind
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               Demo Platform
             </span>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
             Платформа финансовой аналитики и оперативной оптимизации закупок малого бизнеса
           </p>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161F30] border border-[#243045] text-xs text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161F30] border border-[#243045] text-[11px] sm:text-xs text-slate-300">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             <span>Выберите демонстрационное пространство для старта</span>
           </div>
@@ -60,11 +60,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         )}
 
         {/* Demo Cases Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* CASE A: Cafe Aroma */}
-          <div className="p-6 rounded-3xl bg-[#161F30] border border-[#243045] hover:border-emerald-500/40 transition-all flex flex-col justify-between shadow-2xl relative group">
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#161F30] border border-[#243045] hover:border-emerald-500/40 transition-all flex flex-col justify-between shadow-2xl relative group">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-0">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                     <Coffee className="w-5 h-5 text-amber-400" />
@@ -76,7 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     <p className="text-[11px] text-slate-400">ул. Абая 45 • Алексей Смирнов</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                <span className="self-start sm:self-auto text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                   Первоначальное внедрение
                 </span>
               </div>
@@ -117,9 +117,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           </div>
 
           {/* CASE B: Daily Cup */}
-          <div className="p-6 rounded-3xl bg-[#161F30] border border-[#243045] hover:border-teal-500/40 transition-all flex flex-col justify-between shadow-2xl relative group">
+          <div className="p-5 sm:p-6 rounded-3xl bg-[#161F30] border border-[#243045] hover:border-teal-500/40 transition-all flex flex-col justify-between shadow-2xl relative group">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-0">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
                     <Store className="w-5 h-5 text-teal-400" />
@@ -131,7 +131,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     <p className="text-[11px] text-slate-400">ул. Достык 89 • Данияр Касымов</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
+                <span className="self-start sm:self-auto text-[10px] font-bold px-2 py-1 rounded-full bg-teal-500/15 text-teal-300 border border-teal-500/30">
                   Регулярное использование
                 </span>
               </div>

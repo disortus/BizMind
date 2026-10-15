@@ -59,7 +59,7 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
   const totalSpent = purchases.reduce((acc, p) => acc + p.total_price, 0);
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Product History Modal if opened */}
       <ProductHistoryModal
         productId={historyModalProductId}
@@ -68,7 +68,7 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
       />
 
       {/* Header Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="p-4 rounded-xl bg-[#161F30] border border-[#243045]">
           <div className="text-xs text-slate-400 mb-1">Всего закуплено на сумму</div>
           <div className="text-xl font-bold font-mono text-white">
@@ -100,7 +100,7 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
       </div>
 
       {/* Filters and search */}
-      <div className="p-4 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         {/* Search */}
         <form
           onSubmit={(e) => {
@@ -121,11 +121,11 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
 
         {/* Supplier Filter */}
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <select
             value={selectedSupplier}
             onChange={(e) => setSelectedSupplier(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#243045] text-white text-xs focus:outline-none focus:border-emerald-500"
+            className="w-full md:w-auto px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#243045] text-white text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             <option value="all">Все поставщики</option>
             {suppliers.map((s) => (
@@ -137,7 +137,7 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
 
           <button
             onClick={fetchData}
-            className="p-2 rounded-xl bg-[#0B0F17] border border-[#243045] text-slate-400 hover:text-white transition ml-auto"
+            className="p-2 rounded-xl bg-[#0B0F17] border border-[#243045] text-slate-400 hover:text-white transition shrink-0"
             title="Обновить"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -158,8 +158,8 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
         ) : purchases.length === 0 ? (
           <div className="p-16 text-center text-slate-500 text-xs">Закупок не найдено.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead>
                 <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase tracking-wider bg-[#0F172A]/50">
                   <th className="py-3 px-4 font-medium">Товар</th>

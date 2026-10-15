@@ -107,7 +107,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -122,7 +122,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: File upload & Type Selection (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-5">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-5">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <UploadCloud className="w-4 h-4 text-emerald-400" />
               <span>1. Выбор типа данных и загрузка файла</span>
@@ -133,7 +133,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
               <label className="block text-xs font-medium text-slate-400 mb-2">
                 Тип импортируемых данных:
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
                 {[
                   { id: 'finances', label: 'Финансы (расходы/доходы)' },
                   { id: 'purchases', label: 'История закупок' },
@@ -162,7 +162,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
             </div>
 
             {/* Drag & Drop Upload Zone */}
-            <div className="border-2 border-dashed border-[#243045] hover:border-emerald-500/50 rounded-2xl p-8 text-center transition bg-[#0B0F17]/50 relative">
+            <div className="border-2 border-dashed border-[#243045] hover:border-emerald-500/50 rounded-2xl p-5 sm:p-8 text-center transition bg-[#0B0F17]/50 relative">
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
@@ -226,7 +226,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
                 {/* Sample table */}
                 {preview.sample_rows.length > 0 && (
                   <div className="overflow-x-auto rounded-lg border border-[#243045]">
-                    <table className="w-full text-[11px] text-left">
+                    <table className="w-full text-[11px] text-left min-w-[500px]">
                       <thead className="bg-slate-900 text-slate-400">
                         <tr>
                           {preview.headers_detected.map((h, i) => (
@@ -256,7 +256,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
                   <button
                     onClick={handleExecuteImport}
                     disabled={!preview.is_valid || executeLoading}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition disabled:opacity-40"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition disabled:opacity-40"
                   >
                     <Check className="w-4 h-4" />
                     <span>
@@ -304,7 +304,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
         {/* Right Column: Sample Demo Files & Reset Demo (1 col) */}
         <div className="space-y-6">
           {/* Sample Files Download */}
-          <div className="p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-4">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Download className="w-4 h-4 text-emerald-400" />
               <span>Демо-файлы кофейни</span>
@@ -336,7 +336,7 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
           </div>
 
           {/* Reset Demo State Box */}
-          <div className="p-6 rounded-2xl bg-[#161F30] border border-amber-500/20 space-y-3">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-amber-500/20 space-y-3">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-amber-400" />
               <span>Восстановление демо-состояния</span>
@@ -356,14 +356,14 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
       </div>
 
       {/* Import History Table */}
-      <div className="rounded-2xl bg-[#161F30] border border-[#243045] overflow-hidden">
+      <div className="-mx-4 sm:mx-0 rounded-none sm:rounded-2xl border-x-0 sm:border-x border-y sm:border border-[#243045] bg-[#161F30] overflow-hidden">
         <div className="p-4 border-b border-[#243045] text-xs font-bold text-white flex items-center gap-2">
           <Clock className="w-4 h-4 text-slate-400" />
           <span>История пакетных импортов (Import Batches)</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[650px]">
             <thead>
               <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase tracking-wider bg-[#0F172A]/50">
                 <th className="py-3 px-4 font-medium">Файл</th>

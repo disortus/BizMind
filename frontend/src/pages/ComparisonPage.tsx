@@ -55,7 +55,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   }, [activeProductId, quantity]);
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -68,12 +68,12 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
         </div>
 
         {/* Product Dropdown Selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <label className="text-xs text-slate-400">Выберите товар:</label>
           <select
             value={activeProductId}
             onChange={(e) => setActiveProductId(Number(e.target.value))}
-            className="px-4 py-2 rounded-xl bg-[#161F30] border border-[#243045] text-white text-xs font-semibold focus:outline-none focus:border-emerald-500 shadow-md"
+            className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-[#161F30] border border-[#243045] text-white text-xs font-semibold focus:outline-none focus:border-emerald-500 shadow-md"
           >
             {products.map((p) => (
               <option key={p.id} value={p.id} className="bg-[#0F172A]">
@@ -91,10 +91,10 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
       ) : comparison ? (
         <div className="space-y-6">
           {/* Current Supplier & Price Jump Card */}
-          <div className="p-6 rounded-2xl bg-[#161F30] border border-[#243045] relative overflow-hidden">
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] relative overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div>
-                <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     Текущее состояние закупки
                   </span>
@@ -114,7 +114,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
               </div>
 
               {/* Price Stats */}
-              <div className="flex items-center gap-6 bg-[#0B0F17] p-4 rounded-xl border border-[#243045]">
+              <div className="grid grid-cols-2 sm:flex sm:items-center gap-4 sm:gap-6 bg-[#0B0F17] p-3.5 sm:p-4 rounded-xl border border-[#243045] w-full lg:w-auto">
                 <div>
                   <div className="text-[11px] text-slate-400">Предыдущая цена</div>
                   <div className="text-sm font-semibold font-mono text-slate-400 mt-0.5">
@@ -122,7 +122,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                   </div>
                 </div>
 
-                <div className="w-px h-8 bg-[#243045]"></div>
+                <div className="hidden sm:block w-px h-8 bg-[#243045]"></div>
 
                 <div>
                   <div className="text-[11px] text-slate-400">Новая цена закупки</div>
@@ -135,12 +135,12 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
             </div>
 
             {/* Interactive Quantity Form */}
-            <div className="mt-6 pt-5 border-t border-[#243045] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+            <div className="mt-6 pt-5 border-t border-[#243045] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <label className="text-xs font-semibold text-slate-300">
                   Планируемый объем партии ({comparison.unit}):
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="number"
                     min="1"
@@ -149,7 +149,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                     onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
                     className="w-24 px-3 py-1.5 rounded-lg bg-[#0B0F17] border border-[#243045] font-mono text-sm font-bold text-white text-center focus:outline-none focus:border-emerald-500"
                   />
-                  <div className="flex gap-1.5">
+                  <div className="flex flex-wrap gap-1.5">
                     {[10, 20, 50, 100].map((val) => (
                       <button
                         key={val}
@@ -168,11 +168,11 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
               </div>
 
               {comparison.best_offer && (
-                <div className="text-right">
+                <div className="text-left lg:text-right bg-slate-950/40 p-3 rounded-xl border border-slate-800/80 lg:border-none lg:bg-transparent lg:p-0">
                   <div className="text-[11px] text-slate-400">
                     Максимальная потенциальная разница на объем {quantity} {comparison.unit}:
                   </div>
-                  <div className="text-xl font-bold font-mono text-emerald-400">
+                  <div className="text-xl font-bold font-mono text-emerald-400 mt-0.5">
                     {formatTenge(comparison.best_offer.total_difference)}
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
 
           {/* Alternative Offers List / Cards */}
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
               <h3 className="text-sm font-bold text-white">
                 Доступные предложения поставщиков ({comparison.alternative_offers.length})
               </h3>

@@ -75,9 +75,9 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             Центр уведомлений и сигналов
@@ -87,10 +87,10 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => setUnreadOnly(!unreadOnly)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${
+            className={`flex-1 sm:flex-none justify-center px-3 py-2 sm:py-1.5 rounded-xl text-xs font-medium border transition ${
               unreadOnly
                 ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                 : 'bg-[#161F30] border-[#243045] text-slate-400 hover:text-white'
@@ -101,7 +101,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
 
           <button
             onClick={handleMarkAllRead}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#161F30] border border-[#243045] text-slate-300 hover:text-white text-xs font-medium transition"
+            className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl bg-[#161F30] border border-[#243045] text-slate-300 hover:text-white text-xs font-medium transition"
           >
             <Check className="w-3.5 h-3.5" />
             <span>Прочитать все</span>
@@ -126,7 +126,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             return (
               <div
                 key={n.id}
-                className={`p-5 rounded-2xl border transition flex items-start justify-between gap-4 ${
+                className={`p-4 sm:p-5 rounded-2xl border transition flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
                   !n.is_read
                     ? isDanger
                       ? 'bg-rose-950/20 border-rose-500/30'
@@ -172,13 +172,13 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-3 sm:pt-0 border-t border-[#243045]/60 sm:border-t-0 w-full sm:w-auto">
                   <button
                     onClick={() => {
                       if (!n.is_read) handleMarkRead(n.id);
                       onNavigate(action.tab, n.related_product_id || undefined);
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-sm transition"
+                    className="flex-1 sm:flex-none justify-center px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-sm transition"
                   >
                     <span>{action.label}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
                   {!n.is_read && (
                     <button
                       onClick={() => handleMarkRead(n.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                      className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
                       title="Пометить как прочитанное"
                     >
                       <Check className="w-4 h-4" />

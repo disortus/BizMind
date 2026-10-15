@@ -54,8 +54,8 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="w-full max-w-md bg-[#161F30] border border-[#243045] rounded-2xl shadow-2xl p-6 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-md bg-[#161F30] border border-[#243045] rounded-2xl shadow-2xl p-5 sm:p-6 max-h-[92dvh] overflow-y-auto">
         <div className="flex items-center justify-between pb-4 border-b border-[#243045]">
           <h3 className="text-base font-bold text-white">Добавить финансовую операцию</h3>
           <button

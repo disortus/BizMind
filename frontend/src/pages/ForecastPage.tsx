@@ -53,7 +53,7 @@ export const ForecastPage: React.FC<ForecastPageProps> = ({ onGoToComparison }) 
   });
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-[#161F30] border border-[#243045]">
@@ -103,8 +103,8 @@ export const ForecastPage: React.FC<ForecastPageProps> = ({ onGoToComparison }) 
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-[#161F30] border border-[#243045] text-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 p-1 rounded-xl bg-[#161F30] border border-[#243045] text-xs">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-lg transition ${
@@ -133,9 +133,9 @@ export const ForecastPage: React.FC<ForecastPageProps> = ({ onGoToComparison }) 
       </div>
 
       {/* Forecast Table */}
-      <div className="rounded-2xl bg-[#161F30] border border-[#243045] overflow-hidden">
+      <div className="-mx-4 sm:mx-0 rounded-none sm:rounded-2xl border-x-0 sm:border-x border-y sm:border border-[#243045] bg-[#161F30] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[780px]">
             <thead>
               <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase tracking-wider bg-[#0F172A]/50">
                 <th className="py-3 px-4 font-medium">Товар</th>

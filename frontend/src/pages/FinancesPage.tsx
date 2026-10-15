@@ -59,10 +59,10 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <div className="p-4 rounded-xl bg-[#161F30] border border-[#243045]">
             <div className="text-xs text-slate-400 mb-1 flex items-center justify-between">
               <span>Совокупные расходы</span>
@@ -105,7 +105,7 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         {/* Search */}
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -119,14 +119,14 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
         </form>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
           {/* Category Select */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Filter className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-1 sm:flex-initial min-w-[140px]">
+            <Filter className="w-3.5 h-3.5 shrink-0" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#243045] text-white text-xs focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#243045] text-white text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
             >
               {categories.map((c) => (
                 <option key={c} value={c} className="bg-[#161F30]">
@@ -173,7 +173,7 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
           {/* Add Operation button */}
           <button
             onClick={onOpenAddModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition ml-auto"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition w-full sm:w-auto sm:ml-auto"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Добавить операцию</span>
@@ -201,8 +201,8 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
             Нет операций, удовлетворяющих заданным критериям фильтра.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full text-left text-xs min-w-[620px]">
               <thead>
                 <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase tracking-wider bg-[#0F172A]/50">
                   <th className="py-3 px-4 font-medium">Дата</th>
