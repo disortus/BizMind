@@ -25,6 +25,7 @@ export function App() {
   const [categories, setCategories] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Check login state and load available organizations on initial mount
   useEffect(() => {
@@ -60,6 +61,7 @@ export function App() {
     setUser(null);
     setSelectedProductId(null);
     setActiveTab('dashboard');
+    setIsMobileMenuOpen(false);
     api.getOrganizations().then(setOrganizations).catch(() => {});
   };
 
@@ -88,6 +90,7 @@ export function App() {
       setSelectedProductId(productId);
     }
     setActiveTab(tab);
+    setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -102,6 +105,7 @@ export function App() {
       setCurrentOrgId(newOrgId);
       setUser(switchedUser);
       setSelectedProductId(null);
+      setIsMobileMenuOpen(false);
       // Increment refreshKey to clear and reload state on all screens
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
@@ -192,13 +196,14 @@ export function App() {
   const pageInfo = getPageInfo();
 
   return (
-    <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex">
+    <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex relative overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setSelectedProductId(null);
           setActiveTab(tab);
+          setIsMobileMenuOpen(false);
         }}
         unreadCount={unreadCount}
         user={user}
@@ -206,6 +211,8 @@ export function App() {
         organizations={organizations}
         onSwitchOrg={handleSwitchOrg}
         onReturnToCases={handleReturnToCases}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content Area */}
@@ -221,6 +228,7 @@ export function App() {
           unreadCount={unreadCount}
           currentOrgName={currentOrgMeta.name}
           scenarioTitle={currentOrgMeta.scenario_title}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         />
 
         <main className="flex-1 pb-16">
