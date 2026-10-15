@@ -1,0 +1,20 @@
+app = "bizmind-backend-disortus"
+primary_region = "fra" # Франкфурт (близко к СНГ) или ams (Амстердам)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATABASE_PATH = "/app/data/bizmind.db"
+  DEMO_DATA_DIR = "/app/data/demo_data"
+  PYTHONUNBUFFERED = "1"
+  ENVIRONMENT = "production"
+
+[mounts]
+  source = "bizmind_db_data"
+  destination = "/app/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpus = 1
