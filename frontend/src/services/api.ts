@@ -193,6 +193,7 @@ export const api = {
     return res.data;
   },
   downloadSampleUrl: (filename: string): string => {
-    return `/api/demo/files/${filename}`;
+    const base = import.meta.env.VITE_API_URL || '/api';
+    return `${base}/demo/files/${filename}`;
   },
 };
