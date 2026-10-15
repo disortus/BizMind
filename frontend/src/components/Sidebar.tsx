@@ -14,6 +14,7 @@ import {
   Check,
   LogOut,
   ArrowLeft,
+  X,
 } from 'lucide-react';
 import { cn } from '../utils/formatters';
 import { User, OrganizationInfo } from '../types';
@@ -27,6 +28,8 @@ interface SidebarProps {
   organizations: OrganizationInfo[];
   onSwitchOrg: (orgId: number) => void;
   onReturnToCases?: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -38,6 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   organizations,
   onSwitchOrg,
   onReturnToCases,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
 
@@ -100,24 +105,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return name.slice(0, 2).toUpperCase();
   };
 
-  return (
-    <aside className="w-64 bg-[#0F172A] border-r border-[#1E293B] flex flex-col justify-between shrink-0 h-screen sticky top-0">
-      <div>
+  const handleTabClick = (tabId: string) => {
+    onSelectTab(tabId);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
+  const renderContent = (isMobile: boolean = false) => (
+    <>
+      <div className="flex-1 overflow-y-auto">
         {/* Brand Header */}
         <div className="p-4 border-b border-[#1E293B]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Sparkles className="w-5 h-5 text-slate-950 font-bold" />
-            </div>
-            <div>
-              <div className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
-                BizMind
-                <span className="text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 py-0.2 rounded">
-                  SaaS
-                </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <Sparkles className="w-5 h-5 text-slate-950 font-bold" />
               </div>
-              <p className="text-[11px] text-slate-400">Финансы & Закупки</p>
+              <div>
+                <div className="text-base font-bold tracking-tight text-white flex items-center gap-1.5">
+                  BizMind
+                  <span className="text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1 py-0.2 rounded">
+                    SaaS
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">Финансы & Закупки</p>
+              </div>
             </div>
+
+            {/* Mobile close button */}
+            {isMobile && onCloseMobile && (
+              <button
+                onClick={onCloseMobile}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition lg:hidden"
+                aria-label="Закрыть меню"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
           {/* Interactive Organization Switcher */}
@@ -167,6 +192,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         if (currentOrgId !== item.id) {
                           onSwitchOrg(item.id);
                         }
+                        if (isMobile && onCloseMobile) {
+                          onCloseMobile();
+                        }
                       }}
                       className={cn(
                         'w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition',
@@ -191,6 +219,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => {
                       setIsOrgDropdownOpen(false);
                       onReturnToCases();
+                      if (isMobile && onCloseMobile) {
+                        onCloseMobile();
+                      }
                     }}
                     className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs text-slate-400 hover:text-emerald-300 hover:bg-[#1E293B] border-t border-[#243045]/60 transition mt-1"
                   >
@@ -214,9 +245,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             return (
               <button
                 key={item.id}
-                onClick={() => onSelectTab(item.id)}
+                onClick={() => handleTabClick(item.id)}
                 className={cn(
-                  'w-full flex items-center justify-between px-3.5 py-2 rounded-lg text-xs font-medium transition-all duration-150',
+                  'w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-150',
                   isActive
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shadow-sm font-semibold'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-[#161F30]'
@@ -245,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer User Info */}
-      <div className="p-3.5 border-t border-[#1E293B] bg-[#0B0F17]/50">
+      <div className="p-3.5 border-t border-[#1E293B] bg-[#0B0F17]/50 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
@@ -262,7 +293,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           {onReturnToCases && (
             <button
-              onClick={onReturnToCases}
+              onClick={() => {
+                onReturnToCases();
+                if (isMobile && onCloseMobile) {
+                  onCloseMobile();
+                }
+              }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 transition"
               title="Выйти к экрану выбора кейсов"
             >
@@ -275,6 +311,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="text-emerald-400/80 font-medium">Демо-режим</span>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar (Unchanged layout for lg+ screens) */}
+      <aside className="hidden lg:flex w-64 bg-[#0F172A] border-r border-[#1E293B] flex-col justify-between shrink-0 h-screen sticky top-0">
+        {renderContent(false)}
+      </aside>
+
+      {/* Mobile Backdrop Overlay */}
+      <div
+        className={cn(
+          'fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300',
+          isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        )}
+        onClick={onCloseMobile}
+        aria-hidden="true"
+      />
+
+      {/* Mobile Drawer */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#0F172A] border-r border-[#1E293B] flex flex-col justify-between transform transition-transform duration-300 ease-in-out lg:hidden shadow-2xl',
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+        aria-label="Мобильная навигация"
+      >
+        {renderContent(true)}
+      </aside>
+    </>
   );
 };
+
