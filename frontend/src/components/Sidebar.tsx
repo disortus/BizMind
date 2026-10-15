@@ -12,6 +12,8 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  LogOut,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '../utils/formatters';
 import { User, OrganizationInfo } from '../types';
@@ -24,6 +26,7 @@ interface SidebarProps {
   currentOrgId: number;
   organizations: OrganizationInfo[];
   onSwitchOrg: (orgId: number) => void;
+  onReturnToCases?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -34,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentOrgId,
   organizations,
   onSwitchOrg,
+  onReturnToCases,
 }) => {
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
 
@@ -182,6 +186,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </button>
                   );
                 })}
+                {onReturnToCases && (
+                  <button
+                    onClick={() => {
+                      setIsOrgDropdownOpen(false);
+                      onReturnToCases();
+                    }}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs text-slate-400 hover:text-emerald-300 hover:bg-[#1E293B] border-t border-[#243045]/60 transition mt-1"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>К выбору кейса</span>
+                  </button>
+                )}
                 <div className="px-2 pt-1 text-[9px] text-slate-500 text-center border-t border-[#243045]/60">
                   Демо-данные изолированы
                 </div>
@@ -244,6 +260,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           </div>
+          {onReturnToCases && (
+            <button
+              onClick={onReturnToCases}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 transition"
+              title="Выйти к экрану выбора кейсов"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
         <div className="mt-2.5 pt-2 border-t border-[#1E293B]/60 text-[10px] text-slate-500 flex items-center justify-between">
           <span>BizMind v1.0</span>

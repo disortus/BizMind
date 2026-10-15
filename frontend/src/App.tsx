@@ -28,6 +28,15 @@ export function App() {
 
   // Check login state and load available organizations on initial mount
   useEffect(() => {
+    if (!api.hasSavedOrg()) {
+      // No selected demo space yet -> show LoginPage with Case A and Case B cards
+      api.getOrganizations()
+        .then(setOrganizations)
+        .catch(() => {})
+        .finally(() => setLoading(false));
+      return;
+    }
+
     Promise.all([
       api.getOrganizations().catch(() => []),
       api.getMe().catch(() => null),
@@ -39,10 +48,20 @@ export function App() {
           if (u.organization?.id) {
             setCurrentOrgId(u.organization.id);
           }
+        } else {
+          api.logout();
         }
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleReturnToCases = () => {
+    api.logout();
+    setUser(null);
+    setSelectedProductId(null);
+    setActiveTab('dashboard');
+    api.getOrganizations().then(setOrganizations).catch(() => {});
+  };
 
   // Fetch categories and unread notifications count whenever user, org, or refreshKey changes
   const refreshAuxData = async () => {
@@ -186,6 +205,7 @@ export function App() {
         currentOrgId={currentOrgId}
         organizations={organizations}
         onSwitchOrg={handleSwitchOrg}
+        onReturnToCases={handleReturnToCases}
       />
 
       {/* Main Content Area */}
