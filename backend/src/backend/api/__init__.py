@@ -4,6 +4,10 @@ from backend.api.dashboard import router as dashboard_router
 from backend.api.finances import router as finances_router
 from backend.api.purchases import router as purchases_router
 from backend.api.suppliers import router as suppliers_router
+from backend.api.products import router as products_router
+from backend.api.orders import router as orders_router
+from backend.api.inventory import router as inventory_router
+from backend.api.settings import router as settings_router
 from backend.api.forecast import router as forecast_router
 from backend.api.notifications import router as notifications_router
 from backend.api.imports import router as imports_router
@@ -15,6 +19,10 @@ api_router.include_router(dashboard_router)
 api_router.include_router(finances_router)
 api_router.include_router(purchases_router)
 api_router.include_router(suppliers_router)
+api_router.include_router(products_router)
+api_router.include_router(orders_router)
+api_router.include_router(inventory_router)
+api_router.include_router(settings_router)
 api_router.include_router(forecast_router)
 api_router.include_router(notifications_router)
 api_router.include_router(imports_router)

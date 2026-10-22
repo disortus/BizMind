@@ -58,20 +58,27 @@ export interface Product {
   name: string;
   category: string;
   unit: string;
+  sku?: string | null;
+  description?: string | null;
   package_quantity: number;
   package_unit: string;
   current_stock: number;
   minimum_stock: number;
+  is_active?: boolean;
 }
 
 export interface Supplier {
   id: number;
   name: string;
   contact_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  notes?: string | null;
   delivery_cost: number;
   minimum_order_amount: number;
   source_type: string;
   is_demo: boolean;
+  is_active?: boolean;
 }
 
 export interface Purchase {
@@ -241,3 +248,102 @@ export interface SampleFileInfo {
   description: string;
   size: string;
 }
+
+export interface PurchaseOrderItem {
+  id?: number;
+  product_id: number;
+  product_name?: string;
+  quantity: number;
+  received_quantity?: number | null;
+  unit: string;
+  unit_price: number;
+  total_price: number;
+}
+
+export interface PurchaseOrder {
+  id: number;
+  organization_id: number;
+  order_number: string;
+  supplier_id: number;
+  supplier_name: string;
+  order_date: string;
+  expected_delivery_date?: string | null;
+  received_date?: string | null;
+  status: 'draft' | 'confirmed' | 'received' | 'cancelled';
+  subtotal_amount: number;
+  delivery_cost: number;
+  total_amount: number;
+  notes?: string | null;
+  created_by_user_id?: number | null;
+  created_at: string;
+  items: PurchaseOrderItem[];
+}
+
+export interface CreatePurchaseOrderData {
+  supplier_id: number;
+  order_date: string;
+  expected_delivery_date?: string | null;
+  delivery_cost?: number;
+  notes?: string | null;
+  items: {
+    product_id: number;
+    quantity: number;
+    unit_price: number;
+  }[];
+}
+
+export interface InventoryMovement {
+  id: number;
+  organization_id: number;
+  product_id: number;
+  product_name: string;
+  movement_type: 'initial' | 'receipt' | 'write_off' | 'adjustment';
+  quantity: number;
+  stock_after: number;
+  reason?: string | null;
+  reference_id?: number | null;
+  created_by_user_id?: number | null;
+  created_at: string;
+}
+
+export interface StockAdjustmentData {
+  product_id: number;
+  actual_stock: number;
+  reason?: string;
+}
+
+export interface WriteOffData {
+  product_id: number;
+  quantity: number;
+  reason: string;
+}
+
+export interface OrganizationSettings {
+  id: number;
+  name: string;
+  business_type: string;
+  currency: string;
+  price_alert_threshold_percent: number;
+  low_stock_days_threshold: number;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  address?: string | null;
+}
+
+export interface ActivityLogItem {
+  id: number;
+  created_at: string;
+  user_name: string;
+  action: string;
+  entity_type: string;
+  entity_id?: number | null;
+  details?: Record<string, any> | null;
+}
+
+export interface CreateUserData {
+  email: string;
+  name: string;
+  role: string;
+  password?: string;
+}
+

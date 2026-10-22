@@ -27,7 +27,15 @@ class DashboardService:
         period: str = "30d",
         organization_id: int = 1,
     ) -> DashboardSummary:
-        today = date(2026, 10, 14)
+        # Dynamically determine latest activity date or fallback to today
+        max_tx_date = db.query(func.max(FinancialTransaction.transaction_date)).filter(
+            FinancialTransaction.organization_id == organization_id
+        ).scalar()
+        max_p_date = db.query(func.max(Purchase.purchase_date)).filter(
+            Purchase.organization_id == organization_id
+        ).scalar()
+
+        today = max(filter(None, [max_tx_date, max_p_date, date.today()]))
 
         # Date ranges
         if period == "30d":
@@ -41,31 +49,53 @@ class DashboardService:
             prev_start = cur_start - timedelta(days=90)
             prev_end = cur_start
         elif period == "month":
-            cur_start = date(2026, 10, 1)
+            cur_start = date(today.year, today.month, 1)
             cur_end = today
-            prev_start = date(2026, 9, 1)
-            prev_end = date(2026, 9, 30)
+            # Previous month
+            prev_month = today.month - 1 if today.month > 1 else 12
+            prev_year = today.year if today.month > 1 else today.year - 1
+            prev_start = date(prev_year, prev_month, 1)
+            prev_end = cur_start - timedelta(days=1)
         else:  # "all"
-            cur_start = date(2026, 1, 1)
+            cur_start = date(2020, 1, 1)
             cur_end = today + timedelta(days=1)
-            prev_start = date(2025, 1, 1)
-            prev_end = date(2025, 12, 31)
+            prev_start = date(2019, 1, 1)
+            prev_end = date(2019, 12, 31)
 
         # 1. Current period transactions
         current_txs = db.query(FinancialTransaction).filter(
             FinancialTransaction.organization_id == organization_id,
             FinancialTransaction.transaction_date >= cur_start,
             FinancialTransaction.transaction_date <= cur_end,
+            FinancialTransaction.is_archived == False,
         ).all()
 
         total_expenses = sum(t.amount for t in current_txs if t.transaction_type == "expense")
         total_income = sum(t.amount for t in current_txs if t.transaction_type == "income")
+
+        # Check if organization is empty (no transactions and no products)
+        products_count = db.query(func.count(Product.id)).filter(
+            Product.organization_id == organization_id
+        ).scalar() or 0
+        total_all_txs_count = db.query(func.count(FinancialTransaction.id)).filter(
+            FinancialTransaction.organization_id == organization_id
+        ).scalar() or 0
+
+        is_empty = (products_count == 0 and total_all_txs_count == 0)
+        onboarding_steps = []
+        if is_empty:
+            onboarding_steps = [
+                "1. Добавьте товары в справочник или импортируйте каталог из Excel/CSV",
+                "2. Создайте карточки поставщиков и внесите их предложения с ценами",
+                "3. Сформируйте первый заказ закупки или зафиксируйте финансовую операцию",
+            ]
 
         # 2. Previous period transactions
         prev_txs = db.query(FinancialTransaction).filter(
             FinancialTransaction.organization_id == organization_id,
             FinancialTransaction.transaction_date >= prev_start,
             FinancialTransaction.transaction_date < prev_end,
+            FinancialTransaction.is_archived == False,
         ).all()
         previous_period_expenses = sum(t.amount for t in prev_txs if t.transaction_type == "expense")
 
@@ -88,7 +118,6 @@ class DashboardService:
             categories.append(CategoryExpense(category=cat, amount=round(amt, 2), percentage=pct))
 
         # 4. Dynamics timeline
-        # Group by day / week
         dynamics_map: Dict[str, Dict[str, float]] = {}
         for t in sorted(current_txs, key=lambda x: x.transaction_date):
             d_str = t.transaction_date.strftime("%d.%m")
@@ -164,11 +193,14 @@ class DashboardService:
         ]
 
         # 8. Potential monthly savings calculation
-        # Sum potential difference for products that have cheaper offers times estimated monthly volume
+        # Honest sum: for each product with recent purchase, check if an active alternative offer is cheaper
         potential_savings_monthly = 0.0
-        org_products = db.query(Product).filter(Product.organization_id == organization_id).all()
+        org_products = db.query(Product).filter(
+            Product.organization_id == organization_id,
+            Product.is_active == True,
+        ).all()
+
         for prod in org_products:
-            # Check if there is an offer cheaper than latest purchase price
             latest_p = db.query(Purchase).filter(
                 Purchase.product_id == prod.id,
                 Purchase.organization_id == organization_id,
@@ -179,11 +211,12 @@ class DashboardService:
                     SupplierOffer.product_id == prod.id,
                     SupplierOffer.organization_id == organization_id,
                     SupplierOffer.supplier_id != latest_p.supplier_id,
+                    SupplierOffer.is_active == True,
                 ).order_by(SupplierOffer.offered_price.asc()).first()
 
                 if best_offer and best_offer.offered_price < latest_p.unit_price:
                     unit_savings = latest_p.unit_price - best_offer.offered_price
-                    # Monthly volume estimate from purchases in 90 days
+                    # Monthly volume estimate from purchases in 90 days or minimum stock
                     qty_90d = db.query(func.sum(Purchase.quantity)).filter(
                         Purchase.product_id == prod.id,
                         Purchase.organization_id == organization_id,
@@ -192,10 +225,6 @@ class DashboardService:
 
                     monthly_qty = max(prod.minimum_stock, qty_90d / 3.0)
                     potential_savings_monthly += unit_savings * monthly_qty
-
-        # Fallback reasonable baseline if no history yet
-        if potential_savings_monthly == 0.0:
-            potential_savings_monthly = 41350.0 if organization_id == 1 else 15500.0
 
         # 9. Featured comparison:
         # Prioritize product with recent price spike notification, or first product with offers
@@ -218,7 +247,7 @@ class DashboardService:
             else:
                 target_quantity = 20.0
         else:
-            # Fallback to first product with offers
+            # Fallback to first product that has offers
             prod_with_offers = db.query(Product).join(SupplierOffer).filter(
                 Product.organization_id == organization_id
             ).first()
@@ -249,4 +278,6 @@ class DashboardService:
             recent_purchases=recent_purchases,
             top_price_alerts=top_price_alerts,
             featured_comparison=featured_comp,
+            is_empty=is_empty,
+            onboarding_steps=onboarding_steps,
         )

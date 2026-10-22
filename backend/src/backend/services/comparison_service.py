@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -51,19 +52,41 @@ class ComparisonService:
         # Get offers
         offers = db.query(SupplierOffer).join(Supplier).filter(
             SupplierOffer.product_id == product_id,
-            SupplierOffer.organization_id == organization_id
+            SupplierOffer.organization_id == organization_id,
+            SupplierOffer.is_active == True,
         ).order_by(SupplierOffer.offered_price.asc()).all()
 
         offer_items: List[AlternativeOfferItem] = []
         best_offer: Optional[AlternativeOfferItem] = None
+        stale_threshold = datetime.utcnow() - timedelta(days=30)
 
         for o in offers:
-            unit_diff = round(current_unit_price - o.offered_price, 2)
+            # Price normalization to base product unit (accounting for unit_ratio if set)
+            ratio = getattr(product, "unit_ratio", 1.0) or 1.0
+            normalized_offered_price = o.offered_price / ratio if ratio > 0 else o.offered_price
+
+            unit_diff = round(current_unit_price - normalized_offered_price, 2)
             tot_diff = round(unit_diff * quantity, 2)
             
             # Delivery impact calculation
             delivery_impact = (o.delivery_cost or 0.0) - current_delivery_cost
             tot_diff_with_delivery = round(tot_diff - delivery_impact, 2)
+
+            # Check staleness
+            is_stale = False
+            warning_notes = []
+            if o.updated_at and o.updated_at < stale_threshold:
+                is_stale = True
+                warning_notes.append("Предложение получено более 30 дней назад")
+
+            if hasattr(o, "valid_until") and o.valid_until and o.valid_until < datetime.utcnow().date():
+                is_stale = True
+                warning_notes.append(f"Срок действия цены истек {o.valid_until}")
+
+            if o.minimum_order_quantity and quantity < o.minimum_order_quantity:
+                warning_notes.append(
+                    f"Количество ({quantity} {o.unit}) меньше минимальной партии ({o.minimum_order_quantity} {o.unit})"
+                )
 
             item = AlternativeOfferItem(
                 supplier_id=o.supplier_id,
@@ -79,18 +102,20 @@ class ComparisonService:
                 updated_at=o.updated_at,
                 is_better=unit_diff > 0,
                 is_demo=o.is_demo,
+                is_stale=is_stale,
+                warning_note="; ".join(warning_notes) if warning_notes else None,
             )
             offer_items.append(item)
 
             # Filter for best offer (excluding current supplier if offer belongs to current)
-            if unit_diff > 0:
-                if best_offer is None or item.total_difference > best_offer.total_difference:
+            if unit_diff > 0 and not is_stale:
+                if best_offer is None or item.total_difference_with_delivery > best_offer.total_difference_with_delivery:
                     best_offer = item
 
         formula_note = (
-            "Потенциальная разница = (Текущая цена поставщика − Цена альтернативы) × Количество. "
-            "Расчет произведен программно на основе сопоставимой единицы измерения. "
-            "Условия минимального заказа и доставки учитываются при итоговом согласовании."
+            "Потенциальная экономия = (Текущая цена поставщика − Цена альтернативы) × Количество. "
+            "Расчет произведен автоматически на основе сопоставимой единицы измерения. "
+            "Обратите внимание: потенциальная экономия не является фактически достигнутой до момента подтверждения закупки."
         )
 
         return PriceComparisonResponse(

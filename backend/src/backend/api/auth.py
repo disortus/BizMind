@@ -5,12 +5,37 @@ from backend.database import get_db
 from backend.models.models import User, Organization
 from backend.schemas.schemas import (
     UserResponse,
+    UserLoginRequest,
     OrganizationResponse,
     OrganizationInfo,
     OrganizationSwitchRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/login", response_model=UserResponse)
+def login(
+    payload: UserLoginRequest,
+    db: Session = Depends(get_db)
+):
+    """Авторизация пользователя по email и паролю."""
+    from backend.security import verify_password
+
+    email_clean = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email_clean).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")
+
+    if user.password_hash:
+        if not verify_password(payload.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Неверный email или пароль")
+
+    if user.is_active is False:
+        raise HTTPException(status_code=403, detail="Учетная запись деактивирована")
+
+    return user
+
 
 
 def _get_org_info(org: Organization, user: Optional[User]) -> OrganizationInfo:

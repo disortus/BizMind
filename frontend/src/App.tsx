@@ -10,6 +10,9 @@ import { ComparisonPage } from './pages/ComparisonPage';
 import { ForecastPage } from './pages/ForecastPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ImportSettingsPage } from './pages/ImportSettingsPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { InventoryPage } from './pages/InventoryPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { api } from './services/api';
 import { User, OrganizationInfo } from './types';
 
@@ -185,6 +188,21 @@ export function App() {
           title: 'Импорт и управление данными',
           subtitle: `Загрузка внешних таблиц Excel/CSV и управление базой ${orgLabel}`,
         };
+      case 'orders':
+        return {
+          title: 'Заказы поставщикам',
+          subtitle: 'Формирование заявок, контроль статусов доставки и оприходование',
+        };
+      case 'inventory':
+        return {
+          title: 'Склад и товарные остатки',
+          subtitle: 'Учет фактических остатков сырья, инвентаризация и аудит списаний',
+        };
+      case 'settings':
+        return {
+          title: 'Настройки и администрирование',
+          subtitle: 'Реквизиты организации, ролевой доступ и журнал аудита безопасности',
+        };
       default:
         return {
           title: 'BizMind',
@@ -281,6 +299,26 @@ export function App() {
             <ImportSettingsPage
               key={`import-${currentOrgId}-${refreshKey}`}
               onDataImported={handleDataChanged}
+            />
+          )}
+
+          {activeTab === 'orders' && (
+            <OrdersPage
+              key={`ord-${currentOrgId}-${refreshKey}`}
+              onRefreshAux={refreshAuxData}
+            />
+          )}
+
+          {activeTab === 'inventory' && (
+            <InventoryPage
+              key={`inv-${currentOrgId}-${refreshKey}`}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsPage
+              key={`set-${currentOrgId}-${refreshKey}`}
+              currentUser={user}
             />
           )}
         </main>
