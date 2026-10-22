@@ -28,18 +28,23 @@ import { formatTenge, formatDate, formatPercent } from '../utils/formatters';
 
 interface ComparisonPageProps {
   selectedProductId?: number | null;
+  initialQuantity?: number | null;
 }
 
 export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   selectedProductId,
+  initialQuantity,
 }) => {
   const [activeTab, setActiveTab] = useState<'compare' | 'catalog'>('compare');
   const [products, setProducts] = useState<Product[]>([]);
   const [activeProductId, setActiveProductId] = useState<number>(
     selectedProductId || 0
   );
-  const [quantity, setQuantity] = useState<number>(20);
+  const [quantity, setQuantity] = useState<number>(
+    initialQuantity && initialQuantity > 0 ? initialQuantity : 20
+  );
   const [comparison, setComparison] = useState<PriceComparison | null>(null);
+  const [selectedOfferSupplierId, setSelectedOfferSupplierId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Supplier Catalog state
@@ -48,6 +53,13 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   const [supplierSearch, setSupplierSearch] = useState('');
   const [supplierSourceFilter, setSupplierSourceFilter] = useState<'all' | 'global' | 'imported' | 'manual'>('all');
   const [offerOriginFilter, setOfferOriginFilter] = useState<'all' | 'global' | 'imported'>('all');
+
+  // Sync initialQuantity when it changes from outside (e.g. Dashboard slider)
+  useEffect(() => {
+    if (initialQuantity && initialQuantity > 0) {
+      setQuantity(initialQuantity);
+    }
+  }, [initialQuantity]);
 
   // Fetch products list on mount / refresh
   useEffect(() => {
@@ -71,7 +83,17 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
     }
     setLoading(true);
     api.comparePrices(activeProductId, quantity)
-      .then((res) => setComparison(res))
+      .then((res) => {
+        setComparison(res);
+        if (res.best_offer?.supplier_id) {
+          setSelectedOfferSupplierId((prev) => {
+            if (prev && res.alternative_offers.some((o) => o.supplier_id === prev)) {
+              return prev;
+            }
+            return res.best_offer?.supplier_id || null;
+          });
+        }
+      })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [activeProductId, quantity]);
@@ -117,6 +139,22 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
     if (offerOriginFilter === 'imported' && (isGlobal || offer.supplier_source_type === 'manual')) return false;
     return true;
   });
+
+  // Selected offer for custom card calculation
+  const selectedOffer =
+    displayedOffers.find((o) => o.supplier_id === selectedOfferSupplierId) ||
+    comparison?.alternative_offers.find((o) => o.supplier_id === selectedOfferSupplierId) ||
+    comparison?.best_offer ||
+    displayedOffers[0] ||
+    null;
+
+  const selectedUnitDiff = comparison && selectedOffer
+    ? comparison.current_unit_price - selectedOffer.offered_price
+    : 0;
+
+  const selectedTotalDiff = selectedUnitDiff * quantity;
+  const selectedDeliveryCost = selectedOffer?.delivery_cost || 0;
+  const selectedTotalDiffWithDelivery = selectedTotalDiff - selectedDeliveryCost;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -329,7 +367,59 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                         </div>
                       </div>
 
-                      {comparison.best_offer && (
+                      {/* Interactive Calculation Box for Selected Card */}
+                      {selectedOffer ? (
+                        <div className="text-left lg:text-right bg-[#0B0F17] p-3.5 sm:p-4 rounded-xl border border-emerald-500/30 w-full lg:w-auto shadow-md">
+                          <div className="flex items-center justify-between lg:justify-end gap-2 mb-1">
+                            <span className="text-[11px] text-slate-400">Расчет для карточки:</span>
+                            <span className="font-bold text-xs text-emerald-300 flex items-center gap-1">
+                              {selectedOffer.supplier_name}
+                              {comparison.best_offer?.supplier_id === selectedOffer.supplier_id && (
+                                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                  ★ Топ
+                                </span>
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-300">
+                            Сумма партии ({quantity} {comparison.unit}):{' '}
+                            <strong className="font-mono text-white">
+                              {formatTenge(selectedOffer.offered_price * quantity)}
+                            </strong>
+                          </div>
+
+                          <div className="mt-1 flex items-baseline justify-between lg:justify-end gap-2">
+                            <span className="text-[11px] text-slate-400">
+                              {selectedTotalDiff >= 0 ? 'Потенциальная экономия:' : 'Переплата к текущему:'}
+                            </span>
+                            <span
+                              className={`text-xl font-bold font-mono ${
+                                selectedTotalDiff >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
+                            >
+                              {selectedTotalDiff >= 0
+                                ? `+${formatTenge(selectedTotalDiff)}`
+                                : `−${formatTenge(Math.abs(selectedTotalDiff))}`}
+                            </span>
+                          </div>
+
+                          {selectedOffer.delivery_cost > 0 && (
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              С учетом доставки ({formatTenge(selectedOffer.delivery_cost)}):{' '}
+                              <span className={selectedTotalDiffWithDelivery >= 0 ? 'text-emerald-400 font-mono' : 'text-rose-400 font-mono'}>
+                                {selectedTotalDiffWithDelivery >= 0
+                                  ? `+${formatTenge(selectedTotalDiffWithDelivery)}`
+                                  : `−${formatTenge(Math.abs(selectedTotalDiffWithDelivery))}`}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="text-[10px] text-slate-500 mt-1 italic">
+                            Нажмите на любую карточку поставщика ниже для пересчета
+                          </div>
+                        </div>
+                      ) : comparison.best_offer ? (
                         <div className="text-left lg:text-right bg-slate-950/40 p-3 rounded-xl border border-slate-800/80 lg:border-none lg:bg-transparent lg:p-0">
                           <div className="text-[11px] text-slate-400">
                             Максимальная потенциальная разница на объем {quantity} {comparison.unit}:
@@ -338,7 +428,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                             {formatTenge(comparison.best_offer.total_difference)}
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
 
@@ -374,37 +464,49 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                         {displayedOffers.map((offer) => {
                           const isCurrent = offer.supplier_id === comparison.current_supplier_id;
                           const isBest = comparison.best_offer?.supplier_id === offer.supplier_id;
+                          const isSelected = selectedOffer?.supplier_id === offer.supplier_id;
                           const isGlobalSupplier = offer.is_global_supplier || offer.supplier_source_type === 'global';
+                          const cardDiff = (comparison.current_unit_price - offer.offered_price) * quantity;
 
                           return (
                             <div
                               key={offer.supplier_id}
-                              className={`p-5 rounded-2xl flex flex-col justify-between transition border relative ${
-                                isBest
-                                  ? 'bg-gradient-to-b from-[#162725] to-[#161F30] border-emerald-500/50 shadow-lg shadow-emerald-500/10'
+                              onClick={() => setSelectedOfferSupplierId(offer.supplier_id)}
+                              className={`p-5 rounded-2xl flex flex-col justify-between transition-all cursor-pointer relative border ${
+                                isSelected
+                                  ? 'bg-gradient-to-b from-[#182e27] to-[#161F30] border-emerald-400 ring-2 ring-emerald-500/50 shadow-xl shadow-emerald-500/15'
+                                  : isBest
+                                  ? 'bg-gradient-to-b from-[#162725] to-[#161F30] border-emerald-500/50 hover:border-emerald-400 shadow-lg shadow-emerald-500/10'
                                   : isCurrent
-                                  ? 'bg-[#161F30] border-rose-500/30'
-                                  : 'bg-[#161F30] border-[#243045] hover:border-slate-600'
+                                  ? 'bg-[#161F30] border-rose-500/30 hover:border-rose-400/50'
+                                  : 'bg-[#161F30] border-[#243045] hover:border-slate-500'
                               }`}
                             >
                               {/* Top Badges: Status + Origin */}
                               <div>
                                 <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5">
-                                  <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                      isBest
-                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    {isSelected && (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 flex items-center gap-1 shadow-sm">
+                                        <CheckCircle className="w-3 h-3" /> Выбрано
+                                      </span>
+                                    )}
+                                    <span
+                                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                        isBest
+                                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                          : isCurrent
+                                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                      }`}
+                                    >
+                                      {isBest
+                                        ? '★ Рекомендуемая'
                                         : isCurrent
-                                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                        : 'bg-slate-800 text-slate-400 border border-slate-700'
-                                    }`}
-                                  >
-                                    {isBest
-                                      ? '★ Рекомендуемая альтернатива'
-                                      : isCurrent
-                                      ? 'Текущий поставщик'
-                                      : 'Альтернатива'}
-                                  </span>
+                                        ? 'Текущий'
+                                        : 'Альтернатива'}
+                                    </span>
+                                  </div>
 
                                   {/* Origin of Supplier Badge */}
                                   {isGlobalSupplier ? (
@@ -437,8 +539,8 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                                 </div>
 
                                 {/* Supplier Name & Price */}
-                                <h4 className="text-base font-bold text-white">
-                                  {offer.supplier_name}
+                                <h4 className="text-base font-bold text-white flex items-center justify-between gap-2">
+                                  <span>{offer.supplier_name}</span>
                                 </h4>
 
                                 <div className="mt-3 flex items-baseline gap-2">
@@ -502,31 +604,64 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                                 </div>
 
                                 {/* Total calculated difference box */}
-                                <div className="mt-4 p-3 rounded-xl bg-[#0B0F17] border border-[#243045] text-xs">
+                                <div className={`mt-4 p-3 rounded-xl border text-xs transition ${
+                                  isSelected
+                                    ? 'bg-[#0B0F17] border-emerald-500/50'
+                                    : 'bg-[#0B0F17] border-[#243045]'
+                                }`}>
                                   <div className="text-[11px] text-slate-400">
-                                    Итого на партию ({quantity} {offer.unit}):
+                                    Итого на объем {quantity} {offer.unit}:
                                   </div>
                                   <div className="flex items-baseline justify-between mt-1">
-                                    <span className="font-mono text-white">
+                                    <span className="font-mono text-white font-semibold">
                                       {formatTenge(offer.offered_price * quantity)}
                                     </span>
                                     <span
                                       className={`font-mono font-bold ${
-                                        offer.total_difference > 0
+                                        cardDiff > 0
                                           ? 'text-emerald-400'
+                                          : cardDiff < 0
+                                          ? 'text-rose-400'
                                           : 'text-slate-400'
                                       }`}
                                     >
-                                      {offer.total_difference > 0
-                                        ? `−${formatTenge(offer.total_difference)}`
+                                      {cardDiff > 0
+                                        ? `−${formatTenge(cardDiff)}`
+                                        : cardDiff < 0
+                                        ? `+${formatTenge(Math.abs(cardDiff))}`
                                         : '0 ₸'}
                                     </span>
                                   </div>
                                   {offer.delivery_cost > 0 && (
                                     <div className="text-[10px] text-slate-500 mt-1">
-                                      С учетом доставки: {formatTenge(offer.total_difference_with_delivery)} разница
+                                      С учетом доставки: {formatTenge(cardDiff - offer.delivery_cost)} разница
                                     </div>
                                   )}
+                                </div>
+
+                                {/* Selection Button */}
+                                <div className="mt-3">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedOfferSupplierId(offer.supplier_id);
+                                    }}
+                                    className={`w-full py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
+                                        : 'bg-[#0B0F17] hover:bg-[#1E293B] border border-[#243045] text-slate-300'
+                                    }`}
+                                  >
+                                    {isSelected ? (
+                                      <>
+                                        <CheckCircle className="w-3.5 h-3.5" />
+                                        <span>Выбрано в расчете</span>
+                                      </>
+                                    ) : (
+                                      <span>Выбрать для расчета</span>
+                                    )}
+                                  </button>
                                 </div>
                               </div>
                             </div>

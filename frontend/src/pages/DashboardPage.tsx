@@ -39,7 +39,7 @@ import { PriceAlertBanner } from '../components/PriceAlertBanner';
 
 interface DashboardPageProps {
   period: string;
-  onNavigate: (tab: string, productId?: number) => void;
+  onNavigate: (tab: string, productId?: number, initialQty?: number) => void;
 }
 
 const CATEGORY_COLORS = [
@@ -714,7 +714,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
               </div>
 
               <button
-                onClick={() => onNavigate('comparison', featuredComp.product_id)}
+                onClick={() => onNavigate('comparison', featuredComp.product_id, interactiveQty)}
                 className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md transition"
               >
                 <span>Сравнить</span>

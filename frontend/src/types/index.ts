@@ -305,6 +305,7 @@ export interface CreatePurchaseOrderData {
   notes?: string | null;
   items: {
     product_id: number;
+    ordered_quantity?: number;
     quantity: number;
     unit_price: number;
   }[];
@@ -342,9 +343,12 @@ export interface OrganizationSettings {
   business_type: string;
   currency: string;
   price_alert_threshold_percent: number;
+  alert_threshold_percent?: number;
   low_stock_days_threshold: number;
   contact_email?: string | null;
+  email?: string | null;
   contact_phone?: string | null;
+  phone?: string | null;
   address?: string | null;
 }
 

@@ -255,10 +255,11 @@ export const api = {
     const res = await client.post<InventoryMovement>('/inventory/write-off', data);
     return res.data;
   },
-  getInventoryExportUrl: (format: 'excel' | 'csv' = 'excel'): string => {
+  getInventoryExportUrl: (format: 'xlsx' | 'excel' | 'csv' = 'xlsx'): string => {
     const base = import.meta.env.VITE_API_URL || '/api';
     const orgId = localStorage.getItem('bizmind_org_id') || '1';
-    return `${base}/inventory/export?format=${format}&org_id=${orgId}`;
+    const normFormat = format === 'excel' ? 'xlsx' : format;
+    return `${base}/inventory/export?format=${normFormat}&org_id=${orgId}`;
   },
 
   // Suppliers & Comparison
@@ -335,7 +336,7 @@ export const api = {
     offset?: number;
     action?: string;
   }): Promise<ActivityLogItem[]> => {
-    const res = await client.get<ActivityLogItem[]>('/settings/activity', { params });
+    const res = await client.get<ActivityLogItem[]>('/settings/activity-logs', { params });
     return res.data;
   },
 

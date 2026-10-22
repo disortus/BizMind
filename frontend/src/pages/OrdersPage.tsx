@@ -22,6 +22,7 @@ import {
 import { PurchaseOrder, Supplier, Product, CreatePurchaseOrderData } from '../types';
 import { api } from '../services/api';
 import { formatTenge, formatDate } from '../utils/formatters';
+import { formatApiError } from '../utils/error';
 
 interface OrdersPageProps {
   onRefreshAux?: () => void;
@@ -149,6 +150,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
         notes: newOrderNotes || undefined,
         items: newOrderItems.map((it) => ({
           product_id: it.product_id,
+          ordered_quantity: Number(it.quantity),
           quantity: Number(it.quantity),
           unit_price: Number(it.unit_price),
         })),
@@ -159,8 +161,8 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
       setNewOrderNotes('');
       await loadData();
     } catch (err: any) {
-      console.error(err);
-      setActionError(err.response?.data?.detail || 'Не удалось создать заказ');
+      console.error('Order creation error:', err);
+      setActionError(formatApiError(err, 'Не удалось создать заказ'));
     } finally {
       setIsSubmitting(false);
     }
@@ -171,7 +173,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
       await api.confirmOrder(orderId);
       await loadData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Ошибка подтверждения');
+      alert(formatApiError(err, 'Ошибка подтверждения'));
     }
   };
 
@@ -187,7 +189,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
       await api.receiveOrder(orderId);
       await loadData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Ошибка при приемке');
+      alert(formatApiError(err, 'Ошибка при приемке'));
     }
   };
 
@@ -197,7 +199,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
       await api.cancelOrder(orderId);
       await loadData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Ошибка отмены');
+      alert(formatApiError(err, 'Ошибка отмены'));
     }
   };
 
