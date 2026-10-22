@@ -198,6 +198,14 @@ class OrderService:
             actual_qty = item.ordered_quantity
             if data.received_quantities and item.id in data.received_quantities:
                 actual_qty = max(0.0, float(data.received_quantities[item.id]))
+            elif data.items:
+                item_map = {
+                    it.get("product_id"): it.get("quantity")
+                    for it in data.items
+                    if isinstance(it, dict) and it.get("quantity") is not None
+                }
+                if item.product_id in item_map:
+                    actual_qty = max(0.0, float(item_map[item.product_id]))
             item.received_quantity = actual_qty
 
             prod = item.product

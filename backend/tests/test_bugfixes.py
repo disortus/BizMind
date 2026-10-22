@@ -122,3 +122,42 @@ def test_purchase_order_item_quantity_alias_and_creation():
     assert created_order["total_amount"] == 15.0 * 1200.0 + 500.0
     assert len(created_order["items"]) == 1
     assert created_order["items"][0]["ordered_quantity"] == 15.0
+
+
+def test_order_creation_default_date_and_confirm_cancel():
+    """Verify purchase order creation without order_date defaults to today and confirm/cancel endpoints work."""
+    res_sups = client.get("/api/suppliers", headers={"X-Organization-Id": "2"})
+    sups = res_sups.json()
+    res_prods = client.get("/api/products", headers={"X-Organization-Id": "2"})
+    prods = res_prods.json()
+
+    # Omit order_date from payload
+    order_payload = {
+        "supplier_id": sups[0]["id"],
+        "delivery_cost": 0.0,
+        "items": [
+            {
+                "product_id": prods[0]["id"],
+                "quantity": 5.0,
+                "unit_price": 2000.0,
+            }
+        ],
+    }
+
+    res_create = client.post("/api/orders", headers={"X-Organization-Id": "2"}, json=order_payload)
+    assert res_create.status_code == 201
+    order = res_create.json()
+    assert order["order_date"] == date.today().isoformat()
+    assert order["status"] == "draft"
+
+    # Confirm order via POST /orders/{id}/confirm
+    res_conf = client.post(f"/api/orders/{order['id']}/confirm", headers={"X-Organization-Id": "2"})
+    assert res_conf.status_code == 200
+    assert res_conf.json()["status"] == "confirmed"
+
+    # Create another order to test cancel
+    res_create2 = client.post("/api/orders", headers={"X-Organization-Id": "2"}, json=order_payload)
+    order2 = res_create2.json()
+    res_canc = client.post(f"/api/orders/{order2['id']}/cancel", headers={"X-Organization-Id": "2"})
+    assert res_canc.status_code == 200
+    assert res_canc.json()["status"] == "cancelled"

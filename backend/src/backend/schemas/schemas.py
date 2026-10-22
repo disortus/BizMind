@@ -344,11 +344,19 @@ class PurchaseOrderItemResponse(BaseModel):
 
 class PurchaseOrderCreate(BaseModel):
     supplier_id: int
-    order_date: date
+    order_date: Optional[date] = None
     expected_delivery_date: Optional[date] = None
     items: List[PurchaseOrderItemCreate]
     delivery_cost: float = 0.0
     notes: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_order_date(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("order_date"):
+                data["order_date"] = date.today()
+        return data
 
 
 class PurchaseOrderUpdate(BaseModel):
@@ -360,6 +368,7 @@ class PurchaseOrderUpdate(BaseModel):
 class PurchaseOrderReceiveRequest(BaseModel):
     # Optional map of {item_id: actual_received_quantity}
     received_quantities: Optional[Dict[int, float]] = None
+    items: Optional[List[Dict[str, Any]]] = None
     record_financial_expense: bool = True
     payment_method: str = "cashless"
 

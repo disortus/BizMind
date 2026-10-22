@@ -90,6 +90,56 @@ def update_order(
     return order
 
 
+@router.post("/{order_id}/confirm", response_model=PurchaseOrderResponse)
+def confirm_order(
+    order_id: int,
+    organization_id: int = Depends(get_current_organization_id),
+    user: User = Depends(require_roles(["owner", "manager"])),
+    db: Session = Depends(get_db),
+):
+    order = OrderService.update_order(
+        db=db,
+        order_id=order_id,
+        data=PurchaseOrderUpdate(status="confirmed"),
+        organization_id=organization_id,
+    )
+    log_activity(
+        db=db,
+        organization_id=organization_id,
+        user=user,
+        action="confirm_order",
+        entity_type="purchase_order",
+        entity_id=str(order.id),
+        details=f"Заказ {order.order_number} подтвержден и отправлен поставщику {order.supplier_name}",
+    )
+    return order
+
+
+@router.post("/{order_id}/cancel", response_model=PurchaseOrderResponse)
+def cancel_order(
+    order_id: int,
+    organization_id: int = Depends(get_current_organization_id),
+    user: User = Depends(require_roles(["owner", "manager"])),
+    db: Session = Depends(get_db),
+):
+    order = OrderService.update_order(
+        db=db,
+        order_id=order_id,
+        data=PurchaseOrderUpdate(status="cancelled"),
+        organization_id=organization_id,
+    )
+    log_activity(
+        db=db,
+        organization_id=organization_id,
+        user=user,
+        action="cancel_order",
+        entity_type="purchase_order",
+        entity_id=str(order.id),
+        details=f"Заказ {order.order_number} отменен",
+    )
+    return order
+
+
 @router.post("/{order_id}/receive", response_model=PurchaseOrderResponse)
 def receive_order(
     order_id: int,

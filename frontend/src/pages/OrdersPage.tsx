@@ -276,6 +276,13 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
         <button
           onClick={() => {
             setIsCreateModalOpen(true);
+            if (suppliers.length > 0 && (!newOrderSupplierId || newOrderSupplierId === 0)) {
+              setNewOrderSupplierId(suppliers[0].id);
+              setNewOrderDeliveryCost(suppliers[0].delivery_cost || 0);
+            }
+            if (!newOrderDate) {
+              setNewOrderDate(new Date().toISOString().split('T')[0]);
+            }
             if (newOrderItems.length === 0) {
               handleAddItem();
             }
