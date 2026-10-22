@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Optional, List, Dict
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 from backend.models.models import (
     FinancialTransaction,
     Purchase,
@@ -193,76 +193,82 @@ class DashboardService:
         ]
 
         # 8. Potential monthly savings calculation
-        # Honest sum: for each product with recent purchase, check if an active alternative offer is cheaper
         potential_savings_monthly = 0.0
-        org_products = db.query(Product).filter(
-            Product.organization_id == organization_id,
-            Product.is_active == True,
-        ).all()
+        if not is_empty:
+            org_products = db.query(Product).filter(
+                Product.organization_id == organization_id,
+                Product.is_active == True,
+            ).all()
 
-        for prod in org_products:
-            latest_p = db.query(Purchase).filter(
-                Purchase.product_id == prod.id,
-                Purchase.organization_id == organization_id,
-            ).order_by(desc(Purchase.purchase_date), desc(Purchase.id)).first()
+            for prod in org_products:
+                latest_p = db.query(Purchase).filter(
+                    Purchase.product_id == prod.id,
+                    Purchase.organization_id == organization_id,
+                ).order_by(desc(Purchase.purchase_date), desc(Purchase.id)).first()
 
-            if latest_p:
-                best_offer = db.query(SupplierOffer).filter(
-                    SupplierOffer.product_id == prod.id,
-                    SupplierOffer.organization_id == organization_id,
-                    SupplierOffer.supplier_id != latest_p.supplier_id,
-                    SupplierOffer.is_active == True,
-                ).order_by(SupplierOffer.offered_price.asc()).first()
+                if latest_p:
+                    best_offer = db.query(SupplierOffer).filter(
+                        SupplierOffer.product_id == prod.id,
+                        or_(
+                            SupplierOffer.organization_id == organization_id,
+                            SupplierOffer.organization_id == None,
+                        ),
+                        SupplierOffer.supplier_id != latest_p.supplier_id,
+                        SupplierOffer.is_active == True,
+                    ).order_by(SupplierOffer.offered_price.asc()).first()
 
-                if best_offer and best_offer.offered_price < latest_p.unit_price:
-                    unit_savings = latest_p.unit_price - best_offer.offered_price
-                    # Monthly volume estimate from purchases in 90 days or minimum stock
-                    qty_90d = db.query(func.sum(Purchase.quantity)).filter(
-                        Purchase.product_id == prod.id,
-                        Purchase.organization_id == organization_id,
-                        Purchase.purchase_date >= today - timedelta(days=90),
-                    ).scalar() or 0.0
+                    if best_offer and best_offer.offered_price < latest_p.unit_price:
+                        unit_savings = latest_p.unit_price - best_offer.offered_price
+                        # Monthly volume estimate from purchases in 90 days or minimum stock
+                        qty_90d = db.query(func.sum(Purchase.quantity)).filter(
+                            Purchase.product_id == prod.id,
+                            Purchase.organization_id == organization_id,
+                            Purchase.purchase_date >= today - timedelta(days=90),
+                        ).scalar() or 0.0
 
-                    monthly_qty = max(prod.minimum_stock, qty_90d / 3.0)
-                    potential_savings_monthly += unit_savings * monthly_qty
+                        monthly_qty = max(prod.minimum_stock, qty_90d / 3.0)
+                        potential_savings_monthly += unit_savings * monthly_qty
 
         # 9. Featured comparison:
-        # Prioritize product with recent price spike notification, or first product with offers
-        spike_notif = db.query(Notification).filter(
-            Notification.organization_id == organization_id,
-            Notification.notification_type == "price_spike",
-            Notification.related_product_id != None,
-        ).order_by(desc(Notification.created_at)).first()
-
-        target_product_id = None
-        target_quantity = 20.0
-
-        if spike_notif and spike_notif.related_product_id:
-            target_product_id = spike_notif.related_product_id
-            target_prod = db.query(Product).filter(Product.id == target_product_id).first()
-            if target_prod and "стакан" in target_prod.name.lower():
-                target_quantity = 50.0
-            elif target_prod and "молоко" in target_prod.name.lower():
-                target_quantity = 60.0
-            else:
-                target_quantity = 20.0
-        else:
-            # Fallback to first product that has offers
-            prod_with_offers = db.query(Product).join(SupplierOffer).filter(
-                Product.organization_id == organization_id
-            ).first()
-            if prod_with_offers:
-                target_product_id = prod_with_offers.id
-                target_quantity = 20.0
-
         featured_comp = None
-        if target_product_id:
-            featured_comp = ComparisonService.compare_product_offers(
-                db=db,
-                product_id=target_product_id,
-                quantity=target_quantity,
-                organization_id=organization_id,
-            )
+        if not is_empty:
+            spike_notif = db.query(Notification).filter(
+                Notification.organization_id == organization_id,
+                Notification.notification_type == "price_spike",
+                Notification.related_product_id != None,
+            ).order_by(desc(Notification.created_at)).first()
+
+            target_product_id = None
+            target_quantity = 20.0
+
+            if spike_notif and spike_notif.related_product_id:
+                target_product_id = spike_notif.related_product_id
+                target_prod = db.query(Product).filter(Product.id == target_product_id).first()
+                if target_prod and "стакан" in target_prod.name.lower():
+                    target_quantity = 50.0
+                elif target_prod and "молоко" in target_prod.name.lower():
+                    target_quantity = 60.0
+                else:
+                    target_quantity = 20.0
+            else:
+                # Fallback to first product that has offers
+                prod_with_offers = db.query(Product).join(
+                    SupplierOffer,
+                    SupplierOffer.product_id == Product.id
+                ).filter(
+                    Product.organization_id == organization_id
+                ).first()
+                if prod_with_offers:
+                    target_product_id = prod_with_offers.id
+                    target_quantity = 20.0
+
+            if target_product_id:
+                featured_comp = ComparisonService.compare_product_offers(
+                    db=db,
+                    product_id=target_product_id,
+                    quantity=target_quantity,
+                    organization_id=organization_id,
+                )
 
         return DashboardSummary(
             period=period,

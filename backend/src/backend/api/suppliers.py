@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 from backend.database import get_db
 from backend.api.deps import get_current_organization_id, get_current_user, require_roles, log_activity
 from backend.models.models import Supplier, SupplierOffer, OfferPriceHistory, Product, User
@@ -23,13 +23,22 @@ router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 @router.get("", response_model=List[SupplierResponse])
 def get_suppliers(
     is_active: Optional[bool] = None,
+    source_type: Optional[str] = Query(None, description="Фильтр по источнику (global, imported, manual)"),
     organization_id: int = Depends(get_current_organization_id),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Supplier).filter(Supplier.organization_id == organization_id)
+    query = db.query(Supplier).filter(
+        or_(
+            Supplier.organization_id == organization_id,
+            Supplier.is_global == True,
+            Supplier.source_type == "global",
+        )
+    )
     if is_active is not None:
         query = query.filter(Supplier.is_active == is_active)
-    return query.order_by(Supplier.name.asc()).all()
+    if source_type:
+        query = query.filter(Supplier.source_type == source_type)
+    return query.order_by(Supplier.is_global.desc(), Supplier.name.asc()).all()
 
 
 @router.get("/comparison", response_model=PriceComparisonResponse)
@@ -55,7 +64,11 @@ def get_supplier(
 ):
     sup = db.query(Supplier).filter(
         Supplier.id == supplier_id,
-        Supplier.organization_id == organization_id
+        or_(
+            Supplier.organization_id == organization_id,
+            Supplier.is_global == True,
+            Supplier.source_type == "global",
+        )
     ).first()
     if not sup:
         raise HTTPException(status_code=404, detail="Поставщик не найден")
@@ -107,12 +120,18 @@ def update_supplier(
     user: User = Depends(require_roles(["owner", "manager"])),
     db: Session = Depends(get_db),
 ):
-    sup = db.query(Supplier).filter(
-        Supplier.id == supplier_id,
-        Supplier.organization_id == organization_id
-    ).first()
+    sup = db.query(Supplier).filter(Supplier.id == supplier_id).first()
     if not sup:
         raise HTTPException(status_code=404, detail="Поставщик не найден")
+
+    if sup.is_global or sup.source_type == "global":
+        raise HTTPException(
+            status_code=403,
+            detail="Поставщики из встроенной базы BizMind защищены от изменения и удаления",
+        )
+
+    if sup.organization_id != organization_id:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
 
     if data.name is not None:
         sup.name = data.name.strip()
@@ -156,12 +175,18 @@ def delete_supplier(
     user: User = Depends(require_roles(["owner"])),
     db: Session = Depends(get_db),
 ):
-    sup = db.query(Supplier).filter(
-        Supplier.id == supplier_id,
-        Supplier.organization_id == organization_id
-    ).first()
+    sup = db.query(Supplier).filter(Supplier.id == supplier_id).first()
     if not sup:
         raise HTTPException(status_code=404, detail="Поставщик не найден")
+
+    if sup.is_global or sup.source_type == "global":
+        raise HTTPException(
+            status_code=403,
+            detail="Поставщики из встроенной базы BizMind защищены от изменения и удаления",
+        )
+
+    if sup.organization_id != organization_id:
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
 
     if hard_delete:
         db.delete(sup)

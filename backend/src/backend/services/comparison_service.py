@@ -50,9 +50,13 @@ class ComparisonService:
                     )
 
         # Get offers
+        from sqlalchemy import or_
         offers = db.query(SupplierOffer).join(Supplier).filter(
             SupplierOffer.product_id == product_id,
-            SupplierOffer.organization_id == organization_id,
+            or_(
+                SupplierOffer.organization_id == organization_id,
+                SupplierOffer.organization_id == None,
+            ),
             SupplierOffer.is_active == True,
         ).order_by(SupplierOffer.offered_price.asc()).all()
 
@@ -91,6 +95,9 @@ class ComparisonService:
             item = AlternativeOfferItem(
                 supplier_id=o.supplier_id,
                 supplier_name=o.supplier.name,
+                supplier_source_type=getattr(o.supplier, "source_type", "imported") or "imported",
+                price_source=getattr(o, "price_source", "catalog") or "catalog",
+                is_global_supplier=bool(getattr(o.supplier, "is_global", False)),
                 offered_price=o.offered_price,
                 unit=o.unit,
                 package_quantity=o.package_quantity,

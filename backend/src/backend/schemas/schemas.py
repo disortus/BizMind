@@ -205,7 +205,7 @@ class SupplierResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    organization_id: int
+    organization_id: Optional[int] = None
     name: str
     contact_name: Optional[str] = None
     phone: Optional[str] = None
@@ -214,7 +214,8 @@ class SupplierResponse(BaseModel):
     notes: Optional[str] = None
     delivery_cost: float
     minimum_order_amount: float
-    source_type: str
+    source_type: str = "imported"  # global, imported, manual
+    is_global: bool = False
     is_demo: bool
     is_active: Optional[bool] = True
 
@@ -228,13 +229,14 @@ class SupplierOfferCreate(BaseModel):
     minimum_order_quantity: float = 1.0
     delivery_cost: float = 0.0
     valid_until: Optional[date] = None
+    price_source: str = "catalog"  # catalog, user_import, manual
 
 
 class SupplierOfferResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    organization_id: int
+    organization_id: Optional[int] = None
     product_id: int
     supplier_id: int
     supplier_name: Optional[str] = None
@@ -245,6 +247,8 @@ class SupplierOfferResponse(BaseModel):
     delivery_cost: float
     valid_until: Optional[date] = None
     updated_at: datetime
+    source_type: Optional[str] = "mock"
+    price_source: str = "catalog"  # catalog, user_import, manual
     is_demo: bool
     is_active: bool = True
 
@@ -402,6 +406,9 @@ class InventoryMovementResponse(BaseModel):
 class AlternativeOfferItem(BaseModel):
     supplier_id: int
     supplier_name: str
+    supplier_source_type: str = "imported"  # global, imported, manual
+    price_source: str = "catalog"  # catalog, user_import, manual
+    is_global_supplier: bool = False
     offered_price: float
     unit: str
     package_quantity: float
@@ -562,3 +569,74 @@ class ActivityLogResponse(BaseModel):
     entity_id: Optional[str] = None
     details: Optional[str] = None
     created_at: datetime
+
+
+# -------------------------------------------------------------------------
+# Report Builder & Templates
+# -------------------------------------------------------------------------
+class ReportTemplateConfig(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    title: Optional[str] = None
+    sections: List[str] = ["kpi_summary", "detailed_table"]
+    period_type: str = "current_month"  # current_month, previous_month, last_30d, last_90d, custom
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    group_by: Optional[str] = "category"  # day, week, month, category, supplier
+    sort_by: Optional[str] = "amount_desc"
+    filters: Optional[Dict[str, Any]] = None
+
+
+class ReportTemplateCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    report_type: str  # financial, procurement, inventory, executive
+    config: ReportTemplateConfig
+
+
+class ReportTemplateUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    report_type: Optional[str] = None
+    config: Optional[ReportTemplateConfig] = None
+    is_archived: Optional[bool] = None
+
+
+class ReportTemplateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    organization_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    report_type: str
+    config: Dict[str, Any]
+    is_system: bool
+    is_archived: bool
+    created_by_user_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ReportPreviewRequest(BaseModel):
+    report_type: str
+    config: ReportTemplateConfig
+
+
+class ReportPreviewResponse(BaseModel):
+    title: str
+    report_type: str
+    organization_name: str
+    currency: str
+    period_label: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    generated_at: datetime
+    kpi_cards: List[Dict[str, Any]] = []
+    charts: Dict[str, Any] = {}
+    summary_data: List[Dict[str, Any]] = []
+    columns: List[Dict[str, str]] = []
+    rows: List[Dict[str, Any]] = []
+    is_empty: bool = False
+    message: Optional[str] = None
+

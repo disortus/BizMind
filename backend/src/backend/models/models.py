@@ -39,6 +39,7 @@ class Organization(Base):
     import_batches = relationship("ImportBatch", back_populates="organization", cascade="all, delete-orphan")
     inventory_movements = relationship("InventoryMovement", back_populates="organization", cascade="all, delete-orphan")
     activity_logs = relationship("ActivityLog", back_populates="organization", cascade="all, delete-orphan")
+    report_templates = relationship("ReportTemplate", back_populates="organization", cascade="all, delete-orphan")
 
 
 class User(Base):
@@ -57,6 +58,7 @@ class User(Base):
     purchase_orders = relationship("PurchaseOrder", back_populates="created_by_user")
     inventory_movements = relationship("InventoryMovement", back_populates="user")
     activity_logs = relationship("ActivityLog", back_populates="user")
+    report_templates = relationship("ReportTemplate", back_populates="created_by_user")
 
 
 class Product(Base):
@@ -90,7 +92,7 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id = Column(Integer, primary_key=True, index=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     name = Column(String(255), nullable=False, index=True)
     contact_name = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
@@ -99,7 +101,8 @@ class Supplier(Base):
     notes = Column(Text, nullable=True)
     delivery_cost = Column(Float, default=0.0)
     minimum_order_amount = Column(Float, default=0.0)
-    source_type = Column(String(50), default="manual")
+    source_type = Column(String(50), default="imported")  # global, imported, manual
+    is_global = Column(Boolean, default=False)
     is_demo = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
 
@@ -115,7 +118,7 @@ class SupplierOffer(Base):
     __tablename__ = "supplier_offers"
 
     id = Column(Integer, primary_key=True, index=True)
-    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     supplier_id = Column(Integer, ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False)
     offered_price = Column(Float, nullable=False)
@@ -126,6 +129,7 @@ class SupplierOffer(Base):
     valid_until = Column(Date, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow)
     source_type = Column(String(50), default="mock")
+    price_source = Column(String(50), default="catalog")  # catalog, user_import, manual
     is_demo = Column(Boolean, default=True)
     is_active = Column(Boolean, default=True)
 
@@ -315,3 +319,23 @@ class ActivityLog(Base):
 
     organization = relationship("Organization", back_populates="activity_logs")
     user = relationship("User", back_populates="activity_logs")
+
+
+class ReportTemplate(Base):
+    __tablename__ = "report_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    report_type = Column(String(50), nullable=False)  # financial, procurement, inventory, executive
+    config = Column(Text, nullable=False)  # JSON-encoded configuration
+    is_system = Column(Boolean, default=False)
+    is_archived = Column(Boolean, default=False)
+    created_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    organization = relationship("Organization", back_populates="report_templates")
+    created_by_user = relationship("User", back_populates="report_templates")
+
