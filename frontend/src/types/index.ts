@@ -69,14 +69,17 @@ export interface Product {
 
 export interface Supplier {
   id: number;
+  organization_id?: number | null;
   name: string;
   contact_name?: string | null;
   phone?: string | null;
   email?: string | null;
+  address?: string | null;
   notes?: string | null;
   delivery_cost: number;
   minimum_order_amount: number;
-  source_type: string;
+  source_type: 'global' | 'imported' | 'manual' | string;
+  is_global: boolean;
   is_demo: boolean;
   is_active?: boolean;
 }
@@ -116,6 +119,9 @@ export interface ProductPriceHistory {
 export interface AlternativeOfferItem {
   supplier_id: number;
   supplier_name: string;
+  supplier_source_type?: 'global' | 'imported' | 'manual' | string;
+  price_source?: 'catalog' | 'user_import' | 'manual' | string;
+  is_global_supplier?: boolean;
   offered_price: number;
   unit: string;
   package_quantity: number;
@@ -127,6 +133,8 @@ export interface AlternativeOfferItem {
   updated_at: string;
   is_better: boolean;
   is_demo: boolean;
+  is_stale?: boolean;
+  warning_note?: string | null;
 }
 
 export interface PriceComparison {
@@ -205,6 +213,16 @@ export interface DashboardSummary {
   recent_purchases: Purchase[];
   top_price_alerts: NotificationItem[];
   featured_comparison?: PriceComparison | null;
+  is_empty?: boolean;
+  empty_reason?: string | null;
+  onboarding_steps?: Array<{
+    step: number;
+    title: string;
+    description: string;
+    done: boolean;
+    link: string;
+    import_type?: string;
+  }>;
 }
 
 export interface ImportBatch {
@@ -346,4 +364,74 @@ export interface CreateUserData {
   role: string;
   password?: string;
 }
+
+// ----------------------------------------------------------------------------
+// Report Builder & Templates
+// ----------------------------------------------------------------------------
+export interface ReportTemplateConfig {
+  title?: string;
+  sections: string[];
+  period_type: 'current_month' | 'previous_month' | 'last_30d' | 'last_90d' | 'custom' | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  group_by?: 'day' | 'week' | 'month' | 'category' | 'supplier' | string;
+  sort_by?: 'amount_desc' | 'amount_asc' | 'date_desc' | 'date_asc' | 'stock_asc' | string;
+  filters?: Record<string, any> | null;
+}
+
+export interface ReportTemplate {
+  id: number;
+  organization_id?: number | null;
+  title: string;
+  description?: string | null;
+  report_type: 'financial' | 'procurement' | 'inventory' | 'executive';
+  config: ReportTemplateConfig;
+  is_system: boolean;
+  is_archived: boolean;
+  created_by_user_id?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportTemplateCreate {
+  title: string;
+  description?: string;
+  report_type: 'financial' | 'procurement' | 'inventory' | 'executive';
+  config: ReportTemplateConfig;
+}
+
+export interface ReportTemplateUpdate {
+  title?: string;
+  description?: string;
+  report_type?: 'financial' | 'procurement' | 'inventory' | 'executive';
+  config?: ReportTemplateConfig;
+  is_archived?: boolean;
+}
+
+export interface ReportKPICard {
+  title: string;
+  value: string;
+  subtitle: string;
+  badge?: string;
+  type?: 'income' | 'expense' | 'profit' | 'loss' | 'neutral' | 'savings';
+}
+
+export interface ReportPreviewResponse {
+  title: string;
+  report_type: string;
+  organization_name: string;
+  currency: string;
+  period_label: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  generated_at: string;
+  kpi_cards: ReportKPICard[];
+  charts: Record<string, any>;
+  summary_data: any[];
+  columns: Array<{ key: string; label: string }>;
+  rows: Record<string, any>[];
+  is_empty: boolean;
+  message?: string | null;
+}
+
 

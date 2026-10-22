@@ -13,6 +13,7 @@ import { ImportSettingsPage } from './pages/ImportSettingsPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { ReportBuilderPage } from './pages/ReportBuilderPage';
 import { api } from './services/api';
 import { User, OrganizationInfo } from './types';
 
@@ -198,6 +199,11 @@ export function App() {
           title: 'Склад и товарные остатки',
           subtitle: 'Учет фактических остатков сырья, инвентаризация и аудит списаний',
         };
+      case 'reports':
+        return {
+          title: 'Шаблоны отчётов',
+          subtitle: 'Конструктор аналитических отчетов, интерактивный аудит и выгрузка в Excel / CSV',
+        };
       case 'settings':
         return {
           title: 'Настройки и администрирование',
@@ -312,6 +318,13 @@ export function App() {
           {activeTab === 'inventory' && (
             <InventoryPage
               key={`inv-${currentOrgId}-${refreshKey}`}
+            />
+          )}
+
+          {activeTab === 'reports' && (
+            <ReportBuilderPage
+              key={`rep-${currentOrgId}-${refreshKey}`}
+              onNavigateToImport={() => handleNavigate('import')}
             />
           )}
 

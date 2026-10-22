@@ -18,6 +18,7 @@ import {
   PackageCheck,
   Boxes,
   Settings,
+  FileText,
 } from 'lucide-react';
 import { cn } from '../utils/formatters';
 import { User, OrganizationInfo } from '../types';
@@ -103,6 +104,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Импорт и данные',
       icon: FileSpreadsheet,
       badge: null,
+    },
+    {
+      id: 'reports',
+      label: 'Шаблоны отчётов',
+      icon: FileText,
+      badge: 'Новое',
     },
     {
       id: 'settings',

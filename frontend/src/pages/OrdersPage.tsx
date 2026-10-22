@@ -552,11 +552,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = () => {
                     className="w-full px-3 py-2 rounded-xl bg-[#0B0F17] border border-[#243045] text-white focus:outline-none focus:border-emerald-500"
                     required
                   >
-                    {suppliers.map((s) => (
-                      <option key={s.id} value={s.id} className="bg-[#161F30]">
-                        {s.name} (мин. заказ {formatTenge(s.minimum_order_amount)})
-                      </option>
-                    ))}
+                    {suppliers.map((s) => {
+                      const isGlobal = s.is_global || s.source_type === 'global';
+                      const originTag = isGlobal ? ' [База BizMind]' : s.source_type === 'imported' ? ' [Импорт]' : '';
+                      return (
+                        <option key={s.id} value={s.id} className="bg-[#161F30]">
+                          {s.name}{originTag} (мин. заказ {formatTenge(s.minimum_order_amount || 0)})
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

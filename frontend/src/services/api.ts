@@ -24,6 +24,11 @@ import {
   OrganizationSettings,
   ActivityLogItem,
   CreateUserData,
+  ReportTemplate,
+  ReportTemplateConfig,
+  ReportTemplateCreate,
+  ReportTemplateUpdate,
+  ReportPreviewResponse,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -257,8 +262,8 @@ export const api = {
   },
 
   // Suppliers & Comparison
-  getSuppliers: async (): Promise<Supplier[]> => {
-    const res = await client.get<Supplier[]>('/suppliers');
+  getSuppliers: async (params?: { source_type?: string }): Promise<Supplier[]> => {
+    const res = await client.get<Supplier[]>('/suppliers', { params });
     return res.data;
   },
   createSupplier: async (data: {
@@ -275,6 +280,10 @@ export const api = {
   },
   updateSupplier: async (id: number, data: Partial<Supplier>): Promise<Supplier> => {
     const res = await client.put<Supplier>(`/suppliers/${id}`, data);
+    return res.data;
+  },
+  deleteSupplier: async (id: number): Promise<{ message: string }> => {
+    const res = await client.delete<{ message: string }>(`/suppliers/${id}`);
     return res.data;
   },
   getSupplierOffers: async (supplierId: number): Promise<any[]> => {
@@ -376,6 +385,48 @@ export const api = {
   getTemplateDownloadUrl: (importType: string, format: 'excel' | 'csv' = 'excel'): string => {
     const base = import.meta.env.VITE_API_URL || '/api';
     return `${base}/import/templates/${importType}?format=${format}`;
+  },
+
+  // Report Templates & Builder
+  getReportTemplates: async (includeArchived = false): Promise<ReportTemplate[]> => {
+    const res = await client.get<ReportTemplate[]>(`/reports/templates?include_archived=${includeArchived}`);
+    return res.data;
+  },
+  getReportTemplate: async (id: number): Promise<ReportTemplate> => {
+    const res = await client.get<ReportTemplate>(`/reports/templates/${id}`);
+    return res.data;
+  },
+  createReportTemplate: async (data: ReportTemplateCreate): Promise<ReportTemplate> => {
+    const res = await client.post<ReportTemplate>('/reports/templates', data);
+    return res.data;
+  },
+  updateReportTemplate: async (id: number, data: ReportTemplateUpdate): Promise<ReportTemplate> => {
+    const res = await client.put<ReportTemplate>(`/reports/templates/${id}`, data);
+    return res.data;
+  },
+  duplicateReportTemplate: async (id: number): Promise<ReportTemplate> => {
+    const res = await client.post<ReportTemplate>(`/reports/templates/${id}/duplicate`);
+    return res.data;
+  },
+  deleteReportTemplate: async (id: number): Promise<{ message: string }> => {
+    const res = await client.delete<{ message: string }>(`/reports/templates/${id}`);
+    return res.data;
+  },
+  previewReport: async (payload: { report_type: string; config: ReportTemplateConfig }): Promise<ReportPreviewResponse> => {
+    const res = await client.post<ReportPreviewResponse>('/reports/preview', payload);
+    return res.data;
+  },
+  exportReportExcel: async (payload: { report_type: string; config: ReportTemplateConfig }): Promise<Blob> => {
+    const res = await client.post('/reports/export/excel', payload, {
+      responseType: 'blob',
+    });
+    return res.data;
+  },
+  exportReportCsv: async (payload: { report_type: string; config: ReportTemplateConfig }): Promise<Blob> => {
+    const res = await client.post('/reports/export/csv', payload, {
+      responseType: 'blob',
+    });
+    return res.data;
   },
 
   // Demo Controls

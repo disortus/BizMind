@@ -128,11 +128,15 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
             className="w-full md:w-auto px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#243045] text-white text-xs focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             <option value="all">Все поставщики</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={String(s.id)}>
-                {s.name}
-              </option>
-            ))}
+            {suppliers.map((s) => {
+              const isGlobal = s.is_global || s.source_type === 'global';
+              const originTag = isGlobal ? ' [База BizMind]' : s.source_type === 'imported' ? ' [Импорт]' : '';
+              return (
+                <option key={s.id} value={String(s.id)}>
+                  {s.name}{originTag}
+                </option>
+              );
+            })}
           </select>
 
           <button
