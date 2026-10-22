@@ -290,6 +290,21 @@ class PriceHistoryItemResponse(BaseModel):
     changed_at: datetime
 
 
+class SupplierCatalogItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    product_id: int
+    product_name: str
+    category: Optional[str] = None
+    unit: str
+    unit_price: float
+    package_quantity: float = 1.0
+    minimum_order_quantity: float = 1.0
+    price_source: str = "catalog"
+    is_global: bool = False
+    notes: Optional[str] = None
+
+
 # -------------------------------------------------------------------------
 # Purchases & Orders (Procurement Workflow)
 # -------------------------------------------------------------------------
@@ -361,8 +376,12 @@ class PurchaseOrderCreate(BaseModel):
 
 class PurchaseOrderUpdate(BaseModel):
     status: Optional[str] = None  # draft, confirmed, cancelled
+    supplier_id: Optional[int] = None
+    order_date: Optional[date] = None
+    expected_delivery_date: Optional[date] = None
     delivery_cost: Optional[float] = None
     notes: Optional[str] = None
+    items: Optional[List[PurchaseOrderItemCreate]] = None
 
 
 class PurchaseOrderReceiveRequest(BaseModel):

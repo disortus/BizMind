@@ -161,3 +161,80 @@ def test_order_creation_default_date_and_confirm_cancel():
     res_canc = client.post(f"/api/orders/{order2['id']}/cancel", headers={"X-Organization-Id": "2"})
     assert res_canc.status_code == 200
     assert res_canc.json()["status"] == "cancelled"
+
+
+def test_supplier_catalog_and_moq_and_draft_editing():
+    """Verify supplier catalog endpoint, minimum order validation, and draft order item updates."""
+    # 1. Supplier catalog endpoint
+    cat_res = client.get("/api/suppliers/101/catalog", headers={"X-Organization-Id": "2"})
+    assert cat_res.status_code == 200
+    catalog = cat_res.json()
+    assert len(catalog) > 0
+    item = catalog[0]
+    assert "product_id" in item
+    assert "product_name" in item
+    assert "unit_price" in item
+    assert item["unit_price"] > 0
+
+    # 2. Minimum order amount validation
+    # PackGroup Almaty (id=101) has minimum_order_amount = 20000.0
+    sup101 = client.get("/api/suppliers/101", headers={"X-Organization-Id": "2"}).json()
+    assert sup101["minimum_order_amount"] == 20000.0
+
+    # Try order below minimum (e.g. 1 unit at 1420 ₸ = 1420 ₸ < 20000 ₸)
+    invalid_order = client.post(
+        "/api/orders",
+        headers={"X-Organization-Id": "2"},
+        json={
+            "supplier_id": 101,
+            "items": [{"product_id": item["product_id"], "ordered_quantity": 1.0, "unit_price": item["unit_price"]}],
+        },
+    )
+    assert invalid_order.status_code == 400
+    assert "меньше минимальной суммы закупки" in invalid_order.json()["detail"]
+
+    # Valid order meeting minimum order amount (20 units * 1420 = 28400 >= 20000)
+    valid_order_res = client.post(
+        "/api/orders",
+        headers={"X-Organization-Id": "2"},
+        json={
+            "supplier_id": 101,
+            "delivery_cost": 1500.0,
+            "notes": "Начальный черновик",
+            "items": [{"product_id": item["product_id"], "ordered_quantity": 20.0, "unit_price": 1420.0}],
+        },
+    )
+    assert valid_order_res.status_code in [200, 201]
+    order_data = valid_order_res.json()
+    assert order_data["status"] == "draft"
+    assert order_data["subtotal_amount"] == 28400.0
+    assert order_data["total_amount"] == 29900.0
+
+    # 3. Edit draft order (modify items, quantities, notes)
+    order_id = order_data["id"]
+    update_res = client.put(
+        f"/api/orders/{order_id}",
+        headers={"X-Organization-Id": "2"},
+        json={
+            "notes": "Обновленный черновик",
+            "delivery_cost": 1500.0,
+            "items": [{"product_id": item["product_id"], "ordered_quantity": 25.0, "unit_price": 1420.0}],
+        },
+    )
+    assert update_res.status_code == 200
+    updated = update_res.json()
+    assert updated["notes"] == "Обновленный черновик"
+    assert updated["subtotal_amount"] == 35500.0
+    assert updated["total_amount"] == 37000.0
+
+    # 4. Confirm order, then verify items cannot be modified anymore
+    client.post(f"/api/orders/{order_id}/confirm", headers={"X-Organization-Id": "2"})
+    forbidden_edit = client.put(
+        f"/api/orders/{order_id}",
+        headers={"X-Organization-Id": "2"},
+        json={
+            "items": [{"product_id": item["product_id"], "ordered_quantity": 30.0, "unit_price": 1420.0}],
+        },
+    )
+    assert forbidden_edit.status_code == 400
+    assert "только для заказов в статусе «Черновик»" in forbidden_edit.json()["detail"]

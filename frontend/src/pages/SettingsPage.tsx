@@ -17,6 +17,11 @@ import {
   AlertCircle,
   FileCode,
   RotateCcw,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Sparkles,
+  Sliders,
 } from 'lucide-react';
 import { OrganizationSettings, User, ActivityLogItem, CreateUserData } from '../types';
 import { api } from '../services/api';
@@ -56,8 +61,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
   const [newUserRole, setNewUserRole] = useState('manager');
   const [newUserPassword, setNewUserPassword] = useState('Staff123!');
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+  const [showUserPassword, setShowUserPassword] = useState(false);
   const [userFormErrors, setUserFormErrors] = useState<Record<string, string>>({});
   const [userSubmitError, setUserSubmitError] = useState<string | null>(null);
+
+  const handleGeneratePassword = () => {
+    const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%';
+    let pwd = '';
+    for (let i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewUserPassword(pwd);
+    setShowUserPassword(true);
+    if (userFormErrors.password) {
+      setUserFormErrors((prev) => ({ ...prev, password: '' }));
+    }
+  };
 
   // Audit filter
   const [auditActionFilter, setAuditActionFilter] = useState('all');
@@ -283,10 +302,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-[#243045] gap-4">
+      <div className="flex border-b border-[#243045] gap-4 sm:gap-6 overflow-x-auto whitespace-nowrap pb-0.5">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 shrink-0 ${
             activeTab === 'profile'
               ? 'border-emerald-500 text-white'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -297,7 +316,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
         </button>
         <button
           onClick={() => setActiveTab('team')}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 shrink-0 ${
             activeTab === 'team'
               ? 'border-emerald-500 text-white'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -308,7 +327,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
         </button>
         <button
           onClick={() => setActiveTab('audit')}
-          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 ${
+          className={`pb-3 text-xs font-bold transition border-b-2 flex items-center gap-2 shrink-0 ${
             activeTab === 'audit'
               ? 'border-emerald-500 text-white'
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -395,51 +414,89 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">
-                  Порог алерта о росте цен (%) <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={formAlertThreshold}
-                  onChange={(e) => {
-                    setFormAlertThreshold(Number(e.target.value));
-                    if (profileErrors.alert_threshold) setProfileErrors((prev) => ({ ...prev, alert_threshold: '' }));
-                  }}
-                  className={`w-full px-3 py-2 rounded-xl bg-[#0B0F17] border font-mono text-white focus:outline-none ${
-                    profileErrors.alert_threshold ? 'border-rose-500 focus:border-rose-400' : 'border-[#243045] focus:border-emerald-500'
-                  }`}
-                />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-slate-400">
+                  <label className="text-xs">
+                    Порог алерта о росте цен (%) <span className="text-rose-400">*</span>
+                  </label>
+                  <span className="font-mono text-emerald-400 font-bold">{formAlertThreshold}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    step="1"
+                    value={formAlertThreshold}
+                    onChange={(e) => {
+                      setFormAlertThreshold(Number(e.target.value));
+                      if (profileErrors.alert_threshold) setProfileErrors((prev) => ({ ...prev, alert_threshold: '' }));
+                    }}
+                    className="flex-1 accent-emerald-500 cursor-pointer"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formAlertThreshold}
+                    onChange={(e) => {
+                      setFormAlertThreshold(Number(e.target.value));
+                      if (profileErrors.alert_threshold) setProfileErrors((prev) => ({ ...prev, alert_threshold: '' }));
+                    }}
+                    className={`w-16 px-2 py-1 rounded-lg bg-[#0B0F17] border font-mono text-white text-center text-xs focus:outline-none ${
+                      profileErrors.alert_threshold ? 'border-rose-500' : 'border-[#243045] focus:border-emerald-500'
+                    }`}
+                  />
+                </div>
                 {profileErrors.alert_threshold ? (
-                  <p className="text-[11px] text-rose-400 mt-1">{profileErrors.alert_threshold}</p>
+                  <p className="text-[11px] text-rose-400">{profileErrors.alert_threshold}</p>
                 ) : (
-                  <p className="text-[10px] text-slate-500 mt-0.5">Уведомлять при скачке закупочной цены выше этого %</p>
+                  <p className="text-[10px] text-slate-500">
+                    Сигнал сработает при повышении закупочной цены на {formAlertThreshold}% и выше
+                  </p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">
-                  Порог неснижаемого остатка (дни)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="90"
-                  value={formLowStockDays}
-                  onChange={(e) => {
-                    setFormLowStockDays(Number(e.target.value));
-                    if (profileErrors.low_stock) setProfileErrors((prev) => ({ ...prev, low_stock: '' }));
-                  }}
-                  className={`w-full px-3 py-2 rounded-xl bg-[#0B0F17] border font-mono text-white focus:outline-none ${
-                    profileErrors.low_stock ? 'border-rose-500 focus:border-rose-400' : 'border-[#243045] focus:border-emerald-500'
-                  }`}
-                />
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-slate-400">
+                  <label className="text-xs">
+                    Порог неснижаемого остатка (дни) <span className="text-rose-400">*</span>
+                  </label>
+                  <span className="font-mono text-cyan-400 font-bold">{formLowStockDays} дн.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    step="1"
+                    value={formLowStockDays}
+                    onChange={(e) => {
+                      setFormLowStockDays(Number(e.target.value));
+                      if (profileErrors.low_stock) setProfileErrors((prev) => ({ ...prev, low_stock: '' }));
+                    }}
+                    className="flex-1 accent-cyan-400 cursor-pointer"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    max="90"
+                    value={formLowStockDays}
+                    onChange={(e) => {
+                      setFormLowStockDays(Number(e.target.value));
+                      if (profileErrors.low_stock) setProfileErrors((prev) => ({ ...prev, low_stock: '' }));
+                    }}
+                    className={`w-16 px-2 py-1 rounded-lg bg-[#0B0F17] border font-mono text-white text-center text-xs focus:outline-none ${
+                      profileErrors.low_stock ? 'border-rose-500' : 'border-[#243045] focus:border-cyan-400'
+                    }`}
+                  />
+                </div>
                 {profileErrors.low_stock ? (
-                  <p className="text-[11px] text-rose-400 mt-1">{profileErrors.low_stock}</p>
+                  <p className="text-[11px] text-rose-400">{profileErrors.low_stock}</p>
                 ) : (
-                  <p className="text-[10px] text-slate-500 mt-0.5">Порог дней автономности для предупреждения о дефиците</p>
+                  <p className="text-[10px] text-slate-500">
+                    Предупреждение о дефиците появится, когда остатка сырья хватит менее чем на {formLowStockDays} дн.
+                  </p>
                 )}
               </div>
             </div>
@@ -504,17 +561,37 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
               </div>
             </div>
 
-            <div className="pt-3 flex items-center justify-between border-t border-[#243045]">
+            <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-[#243045]">
               {saveSuccess && (
                 <span className="text-emerald-400 font-semibold flex items-center gap-1.5 animate-fadeIn">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Настройки успешно сохранены!
                 </span>
               )}
-              <div className="ml-auto">
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (settings) {
+                      setFormName(settings.name || '');
+                      setFormBusinessType(settings.business_type || '');
+                      setFormCurrency(settings.currency || 'KZT');
+                      setFormAlertThreshold(settings.price_alert_threshold_percent ?? settings.alert_threshold_percent ?? 5);
+                      setFormLowStockDays(settings.low_stock_days_threshold || 5);
+                      setFormEmail(settings.contact_email || settings.email || '');
+                      setFormPhone(settings.contact_phone || settings.phone || '');
+                      setFormAddress(settings.address || '');
+                      setProfileErrors({});
+                      setSaveError(null);
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800 text-slate-300 font-semibold border border-[#243045] transition text-xs"
+                >
+                  Сбросить
+                </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-lg shadow-emerald-500/20 disabled:opacity-50 text-xs"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSaving ? 'Сохранение...' : 'Сохранить изменения'}</span>
@@ -551,48 +628,50 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
           </div>
 
           <div className="rounded-2xl bg-[#161F30] border border-[#243045] overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase bg-[#0F172A]/50">
-                  <th className="py-3 px-4">Сотрудник</th>
-                  <th className="py-3 px-4">E-mail логин</th>
-                  <th className="py-3 px-4">Роль в системе</th>
-                  <th className="py-3 px-4 text-center">Статус</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#243045]/60 text-slate-300">
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-slate-500">
-                      Сотрудники не найдены. Вы можете добавить первого сотрудника с помощью кнопки выше.
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase bg-[#0F172A]/50">
+                    <th className="py-3 px-4">Сотрудник</th>
+                    <th className="py-3 px-4">E-mail логин</th>
+                    <th className="py-3 px-4">Роль в системе</th>
+                    <th className="py-3 px-4 text-center">Статус</th>
                   </tr>
-                ) : (
-                  users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 font-bold">
-                          {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        <span>{u.name}</span>
-                        {currentUser?.id === u.id && (
-                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
-                            Вы
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-400 text-[11px]">{u.email}</td>
-                      <td className="py-3 px-4">{getRoleBadge(u.role)}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                          Активен
-                        </span>
+                </thead>
+                <tbody className="divide-y divide-[#243045]/60 text-slate-300">
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-500">
+                        Сотрудники не найдены. Вы можете добавить первого сотрудника с помощью кнопки выше.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    users.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 font-bold">
+                            {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          <span>{u.name}</span>
+                          {currentUser?.id === u.id && (
+                            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                              Вы
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-slate-400 text-[11px]">{u.email}</td>
+                        <td className="py-3 px-4">{getRoleBadge(u.role)}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            Активен
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -624,46 +703,48 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
           </div>
 
           <div className="rounded-2xl bg-[#161F30] border border-[#243045] overflow-hidden">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase bg-[#0F172A]/50">
-                  <th className="py-3 px-4">Время</th>
-                  <th className="py-3 px-4">Пользователь</th>
-                  <th className="py-3 px-4">Действие</th>
-                  <th className="py-3 px-4">Сущность</th>
-                  <th className="py-3 px-4">Детали операции</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#243045]/60 text-slate-300">
-                {activityLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">
-                      Нет зарегистрированных событий аудита для выбранного фильтра
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-[#243045] text-slate-400 text-[11px] uppercase bg-[#0F172A]/50">
+                    <th className="py-3 px-4">Время</th>
+                    <th className="py-3 px-4">Пользователь</th>
+                    <th className="py-3 px-4">Действие</th>
+                    <th className="py-3 px-4">Сущность</th>
+                    <th className="py-3 px-4">Детали операции</th>
                   </tr>
-                ) : (
-                  activityLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-800/30 transition">
-                      <td className="py-3 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]">
-                        {formatDate(log.created_at)}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-white">{log.user_name || 'Система'}</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
-                        {log.entity_type} {log.entity_id ? `#${log.entity_id}` : ''}
-                      </td>
-                      <td className="py-3 px-4 text-slate-400 text-[11px] max-w-xs truncate">
-                        {log.details ? (typeof log.details === 'string' ? log.details : JSON.stringify(log.details)) : '—'}
+                </thead>
+                <tbody className="divide-y divide-[#243045]/60 text-slate-300">
+                  {activityLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                        Нет зарегистрированных событий аудита для выбранного фильтра
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    activityLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-400 font-mono text-[11px]">
+                          {formatDate(log.created_at)}
+                        </td>
+                        <td className="py-3 px-4 font-medium text-white">{log.user_name || 'Система'}</td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                          {log.entity_type} {log.entity_id ? `#${log.entity_id}` : ''}
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 text-[11px] max-w-xs truncate">
+                          {log.details ? (typeof log.details === 'string' ? log.details : JSON.stringify(log.details)) : '—'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -753,24 +834,52 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ currentUser }) => {
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">
-                  Пароль для входа <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="password"
-                  value={newUserPassword}
-                  onChange={(e) => {
-                    setNewUserPassword(e.target.value);
-                    if (userFormErrors.password) setUserFormErrors((prev) => ({ ...prev, password: '' }));
-                  }}
-                  placeholder="Не менее 6 символов"
-                  className={`w-full px-3 py-2 rounded-xl bg-[#0B0F17] border text-white focus:outline-none ${
-                    userFormErrors.password ? 'border-rose-500 focus:border-rose-400' : 'border-[#243045] focus:border-emerald-500'
-                  }`}
-                  required
-                />
-                {userFormErrors.password && (
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-400">
+                    Пароль для входа <span className="text-rose-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Сгенерировать</span>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showUserPassword ? 'text' : 'password'}
+                    value={newUserPassword}
+                    onChange={(e) => {
+                      setNewUserPassword(e.target.value);
+                      if (userFormErrors.password) setUserFormErrors((prev) => ({ ...prev, password: '' }));
+                    }}
+                    placeholder="Не менее 6 символов"
+                    className={`w-full pl-3 pr-10 py-2 rounded-xl bg-[#0B0F17] border text-white font-mono text-xs focus:outline-none ${
+                      userFormErrors.password ? 'border-rose-500 focus:border-rose-400' : 'border-[#243045] focus:border-emerald-500'
+                    }`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowUserPassword(!showUserPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition"
+                    title={showUserPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                  >
+                    {showUserPassword ? (
+                      <EyeOff className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {userFormErrors.password ? (
                   <p className="text-[11px] text-rose-400 mt-1">{userFormErrors.password}</p>
+                ) : (
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Минимум 6 символов. Нажмите на иконку глаза для проверки пароля.
+                  </p>
                 )}
               </div>
 

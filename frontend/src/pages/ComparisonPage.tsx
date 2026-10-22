@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Clock,
   Layers,
+  ShoppingBag,
 } from 'lucide-react';
 import { Product, PriceComparison, Supplier } from '../types';
 import { api } from '../services/api';
@@ -29,11 +30,13 @@ import { formatTenge, formatDate, formatPercent } from '../utils/formatters';
 interface ComparisonPageProps {
   selectedProductId?: number | null;
   initialQuantity?: number | null;
+  onGoToOrder?: (supplierId: number, productId: number, quantity: number, unitPrice: number) => void;
 }
 
 export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   selectedProductId,
   initialQuantity,
+  onGoToOrder,
 }) => {
   const [activeTab, setActiveTab] = useState<'compare' | 'catalog'>('compare');
   const [products, setProducts] = useState<Product[]>([]);
@@ -115,7 +118,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   const filteredSuppliers = suppliers.filter((s) => {
     const isGlobal = s.is_global || s.source_type === 'global';
     if (supplierSourceFilter === 'global' && !isGlobal) return false;
-    if (supplierSourceFilter === 'imported' && s.source_type !== 'imported') return false;
+    if (supplierSourceFilter === 'imported' && s.source_type !== 'imported' && s.source_type !== 'price_list') return false;
     if (supplierSourceFilter === 'manual' && s.source_type !== 'manual') return false;
 
     if (!supplierSearch.trim()) return true;
@@ -129,7 +132,7 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
   });
 
   const globalSuppliersCount = suppliers.filter((s) => s.is_global || s.source_type === 'global').length;
-  const importedSuppliersCount = suppliers.filter((s) => s.source_type === 'imported').length;
+  const importedSuppliersCount = suppliers.filter((s) => s.source_type === 'imported' || s.source_type === 'price_list').length;
   const manualSuppliersCount = suppliers.filter((s) => s.source_type === 'manual').length;
 
   // Filter alternative offers by origin
@@ -418,6 +421,24 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                           <div className="text-[10px] text-slate-500 mt-1 italic">
                             Нажмите на любую карточку поставщика ниже для пересчета
                           </div>
+
+                          {onGoToOrder && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onGoToOrder(
+                                  selectedOffer.supplier_id,
+                                  activeProductId,
+                                  quantity,
+                                  selectedOffer.offered_price
+                                )
+                              }
+                              className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition cursor-pointer"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>Оформить заказ у «{selectedOffer.supplier_name}»</span>
+                            </button>
+                          )}
                         </div>
                       ) : comparison.best_offer ? (
                         <div className="text-left lg:text-right bg-slate-950/40 p-3 rounded-xl border border-slate-800/80 lg:border-none lg:bg-transparent lg:p-0">
@@ -639,15 +660,15 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                                   )}
                                 </div>
 
-                                {/* Selection Button */}
-                                <div className="mt-3">
+                                {/* Selection & Order Buttons */}
+                                <div className="mt-3 flex items-center gap-2">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedOfferSupplierId(offer.supplier_id);
                                     }}
-                                    className={`w-full py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                                    className={`flex-1 py-1.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition ${
                                       isSelected
                                         ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
                                         : 'bg-[#0B0F17] hover:bg-[#1E293B] border border-[#243045] text-slate-300'
@@ -656,12 +677,31 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                                     {isSelected ? (
                                       <>
                                         <CheckCircle className="w-3.5 h-3.5" />
-                                        <span>Выбрано в расчете</span>
+                                        <span>Выбрано</span>
                                       </>
                                     ) : (
-                                      <span>Выбрать для расчета</span>
+                                      <span>Выбрать</span>
                                     )}
                                   </button>
+                                  {onGoToOrder && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onGoToOrder(
+                                          offer.supplier_id,
+                                          activeProductId,
+                                          quantity,
+                                          offer.offered_price
+                                        );
+                                      }}
+                                      className="py-1.5 px-3 rounded-xl bg-[#0B0F17] hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1 transition shadow-sm"
+                                      title="Оформить заказ у этого поставщика"
+                                    >
+                                      <ShoppingBag className="w-3.5 h-3.5" />
+                                      <span>Заказать</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>

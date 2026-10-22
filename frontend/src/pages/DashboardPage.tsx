@@ -56,6 +56,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [interactiveQty, setInteractiveQty] = useState(20);
+  const [demoScenarioTab, setDemoScenarioTab] = useState<'A' | 'B'>(() =>
+    api.getActiveOrgId() === 2 ? 'B' : 'A'
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -787,63 +790,193 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
         </div>
 
         {/* Quick Demo Shortcuts & Actions (1 col) */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col justify-between space-y-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col justify-between space-y-3.5 shadow-xl">
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">Сценарии демонстрации</h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Ключевые точки пользовательского пути жюри
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                Сценарии демонстрации
+              </h3>
+              <span className="text-[10px] text-slate-400 font-mono bg-[#0B0F17] px-2 py-0.5 rounded border border-[#243045]">
+                {demoScenarioTab === 'A' ? 'Кейс А: Cafe Aroma' : 'Кейс Б: Daily Cup'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-3">
+              Маршрут демонстрации бизнес-логики и сценариев системы для жюри
             </p>
 
-            <div className="space-y-2.5">
+            {/* Scenario Switcher Tabs */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#0B0F17] border border-[#243045] mb-3 text-xs">
               <button
-                onClick={() => onNavigate('import')}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
+                type="button"
+                onClick={() => setDemoScenarioTab('A')}
+                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition text-center ${
+                  demoScenarioTab === 'A'
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    1. Загрузка старого Excel
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Импорт legacy_finances.xlsx
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
+                Кейс А: Внедрение
               </button>
-
               <button
-                onClick={() => onNavigate('comparison', 1)}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
+                type="button"
+                onClick={() => setDemoScenarioTab('B')}
+                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition text-center ${
+                  demoScenarioTab === 'B'
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    2. Сравнение поставщиков кофе
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Aroma Direct vs Coffee Roasters (+15%)
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
-              </button>
-
-              <button
-                onClick={() => onNavigate('forecast')}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    3. Прогноз потребности в молоке
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Остаток 12л при минимуме 25л
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
+                Кейс Б: Экономия
               </button>
             </div>
+
+            {/* Steps List for Scenario A */}
+            {demoScenarioTab === 'A' ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('import')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">1</span>
+                      Импорт данных из Excel
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Загрузка финансовых выписок, остатков и накладных
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('purchases', 1)}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">2</span>
+                      Анализ скачка цен на кофе
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Рост цены зерна +15% (12 000 → 13 800 ₸)
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('comparison', 1, 20)}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">3</span>
+                      Сопоставление поставщиков
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Экономия 36 000 ₸ с Kazakh Coffee Roasters
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('orders')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">4</span>
+                      Заказ по прайс-листу
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Каталог поставщика, мин. заказ и бланк
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('forecast')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">1</span>
+                      Прогноз кассовых разрывов
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Моделирование остатков денег на 30 дней
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('inventory')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">2</span>
+                      Складской учет и остатки
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Неснижаемый запас и списания сырья
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('reports')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">3</span>
+                      Управленческие отчеты
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Конструктор отчетов и выгрузка в Excel / CSV
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('settings')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">4</span>
+                      Команда и журнал аудита
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Управление ролями и неизменяемый лог
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 text-center">
-            Все расчеты произведены на основе бизнес-логики и SQL-агрегатов без сторонних API.
+          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400 text-center">
+            Нажмите на любой шаг для быстрого перехода к модулю системы.
           </div>
         </div>
       </div>

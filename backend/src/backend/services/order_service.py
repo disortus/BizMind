@@ -109,6 +109,14 @@ class OrderService:
                 )
             )
 
+        # Validate supplier minimum order amount
+        if supplier.minimum_order_amount and supplier.minimum_order_amount > 0:
+            if subtotal < supplier.minimum_order_amount:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Сумма заказа ({subtotal:,.0f} ₸) меньше минимальной суммы закупки у поставщика {supplier.name} ({supplier.minimum_order_amount:,.0f} ₸). Добавьте товары еще на {supplier.minimum_order_amount - subtotal:,.0f} ₸.",
+                )
+
         delivery = max(0.0, data.delivery_cost)
         total = round(subtotal + delivery, 2)
 
@@ -146,6 +154,18 @@ class OrderService:
         if not order:
             raise HTTPException(status_code=404, detail="Заказ не найден")
 
+        # If order is not draft, prevent changing items, supplier, or date
+        is_modifying_contents = (
+            data.items is not None or
+            data.supplier_id is not None or
+            data.order_date is not None
+        )
+        if order.status != "draft" and is_modifying_contents:
+            raise HTTPException(
+                status_code=400,
+                detail="Редактировать товарные позиции и условия можно только для заказов в статусе «Черновик» (draft)",
+            )
+
         if data.status:
             target_status = data.status.lower()
             if order.status == "received":
@@ -160,10 +180,82 @@ class OrderService:
 
         if data.delivery_cost is not None:
             order.delivery_cost = max(0.0, data.delivery_cost)
-            order.total_amount = round(order.subtotal_amount + order.delivery_cost, 2)
 
         if data.notes is not None:
             order.notes = data.notes.strip()
+
+        # Update draft order contents
+        if order.status == "draft":
+            if data.order_date is not None:
+                order.order_date = data.order_date
+
+            if data.supplier_id is not None and data.supplier_id != order.supplier_id:
+                target_supplier = db.query(Supplier).filter(
+                    Supplier.id == data.supplier_id,
+                    or_(
+                        Supplier.organization_id == organization_id,
+                        Supplier.organization_id.is_(None),
+                        Supplier.is_global == True,
+                    ),
+                ).first()
+                if not target_supplier:
+                    raise HTTPException(status_code=404, detail="Новый поставщик не найден")
+                order.supplier_id = target_supplier.id
+
+            current_sup = order.supplier
+
+            if data.items is not None:
+                if not data.items:
+                    raise HTTPException(status_code=400, detail="Заказ должен содержать хотя бы одну товарную позицию")
+
+                new_subtotal = 0.0
+                new_items_to_add = []
+
+                for it in data.items:
+                    prod = db.query(Product).filter(
+                        Product.id == it.product_id,
+                        Product.organization_id == organization_id,
+                    ).first()
+                    if not prod:
+                        raise HTTPException(status_code=404, detail=f"Товар ID {it.product_id} не найден")
+
+                    qty = round(abs(it.ordered_quantity), 2)
+                    price = round(abs(it.unit_price), 2)
+                    tot = round(qty * price, 2)
+                    new_subtotal += tot
+
+                    new_items_to_add.append(
+                        PurchaseOrderItem(
+                            purchase_order_id=order.id,
+                            product_id=prod.id,
+                            ordered_quantity=qty,
+                            received_quantity=None,
+                            unit=it.unit or prod.unit,
+                            unit_price=price,
+                            total_price=tot,
+                        )
+                    )
+
+                # Validate MOQ
+                if current_sup and current_sup.minimum_order_amount and current_sup.minimum_order_amount > 0:
+                    if new_subtotal < current_sup.minimum_order_amount:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Сумма заказа ({new_subtotal:,.0f} ₸) меньше минимальной суммы закупки у поставщика {current_sup.name} ({current_sup.minimum_order_amount:,.0f} ₸). Добавьте товары еще на {current_sup.minimum_order_amount - new_subtotal:,.0f} ₸.",
+                        )
+
+                # Remove previous items
+                for old_item in list(order.items):
+                    db.delete(old_item)
+                db.flush()
+
+                # Add updated items
+                for ni in new_items_to_add:
+                    db.add(ni)
+
+                order.subtotal_amount = round(new_subtotal, 2)
+
+        order.total_amount = round(order.subtotal_amount + order.delivery_cost, 2)
 
         db.commit()
         db.refresh(order)

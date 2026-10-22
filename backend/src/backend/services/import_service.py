@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import List, Dict, Any, Tuple, Optional
 import pandas as pd
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 from backend.models.models import (
     FinancialTransaction,
     Purchase,
@@ -280,6 +280,12 @@ class ImportService:
                             Supplier.name.ilike(str(sup_name).strip()),
                         ).first()
                         if not supplier:
+                            supplier = db.query(Supplier).filter(
+                                or_(Supplier.is_global == True, Supplier.source_type == "global"),
+                                Supplier.name.ilike(str(sup_name).strip()),
+                            ).first()
+
+                        if not supplier:
                             supplier = Supplier(
                                 organization_id=organization_id,
                                 name=str(sup_name).strip(),
@@ -398,6 +404,12 @@ class ImportService:
                             Supplier.organization_id == organization_id,
                             Supplier.name.ilike(str(sup_name).strip()),
                         ).first()
+                        if not supplier:
+                            supplier = db.query(Supplier).filter(
+                                or_(Supplier.is_global == True, Supplier.source_type == "global"),
+                                Supplier.name.ilike(str(sup_name).strip()),
+                            ).first()
+
                         if not supplier:
                             supplier = Supplier(
                                 organization_id=organization_id,

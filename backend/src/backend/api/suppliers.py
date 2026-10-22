@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_
 from backend.database import get_db
 from backend.api.deps import get_current_organization_id, get_current_user, require_roles, log_activity
-from backend.models.models import Supplier, SupplierOffer, OfferPriceHistory, Product, User
+from backend.models.models import Supplier, SupplierOffer, OfferPriceHistory, Product, User, Purchase
 from backend.schemas.schemas import (
     SupplierResponse,
     SupplierCreate,
@@ -14,6 +14,7 @@ from backend.schemas.schemas import (
     SupplierOfferResponse,
     PriceHistoryItemResponse,
     PriceComparisonResponse,
+    SupplierCatalogItemResponse,
 )
 from backend.services.comparison_service import ComparisonService
 
@@ -73,6 +74,111 @@ def get_supplier(
     if not sup:
         raise HTTPException(status_code=404, detail="Поставщик не найден")
     return sup
+
+
+@router.get("/{supplier_id}/catalog", response_model=List[SupplierCatalogItemResponse])
+def get_supplier_catalog(
+    supplier_id: int,
+    organization_id: int = Depends(get_current_organization_id),
+    db: Session = Depends(get_db),
+):
+    sup = db.query(Supplier).filter(
+        Supplier.id == supplier_id,
+        or_(
+            Supplier.organization_id == organization_id,
+            Supplier.organization_id.is_(None),
+            Supplier.is_global == True,
+            Supplier.source_type == "global",
+        ),
+    ).first()
+    if not sup:
+        raise HTTPException(status_code=404, detail="Поставщик не найден")
+
+    # 1. Fetch offers from SupplierOffer for this supplier
+    offers = db.query(SupplierOffer).filter(
+        SupplierOffer.supplier_id == supplier_id,
+        or_(
+            SupplierOffer.organization_id == organization_id,
+            SupplierOffer.organization_id.is_(None),
+        ),
+        SupplierOffer.is_active == True,
+    ).all()
+
+    catalog_map = {}
+
+    for o in offers:
+        prod = o.product
+        if not prod:
+            continue
+
+        # If product belongs to another organization (e.g. global offer seeded with org2 product),
+        # try to find matching product in this organization by name
+        actual_product = prod
+        if prod.organization_id != organization_id:
+            org_prod = db.query(Product).filter(
+                Product.organization_id == organization_id,
+                Product.name.ilike(prod.name.strip()),
+            ).first()
+            if org_prod:
+                actual_product = org_prod
+
+        if actual_product.id not in catalog_map:
+            catalog_map[actual_product.id] = SupplierCatalogItemResponse(
+                product_id=actual_product.id,
+                product_name=actual_product.name,
+                category=actual_product.category,
+                unit=o.unit or actual_product.unit,
+                unit_price=o.offered_price,
+                package_quantity=o.package_quantity or 1.0,
+                minimum_order_quantity=o.minimum_order_quantity or 1.0,
+                price_source=o.price_source or ("catalog" if (sup.is_global or sup.source_type == "global") else "imported"),
+                is_global=bool(sup.is_global or sup.source_type == "global"),
+                notes=f"Прайс-лист ({o.offered_price:,.0f} ₸/{o.unit})" if o.package_quantity <= 1 else f"Фасовка: {o.package_quantity} {actual_product.unit}",
+            )
+
+    # 2. Check purchase history for this supplier and organization
+    purchases = db.query(Purchase).filter(
+        Purchase.supplier_id == supplier_id,
+        Purchase.organization_id == organization_id,
+    ).order_by(desc(Purchase.purchase_date), desc(Purchase.id)).all()
+
+    for p in purchases:
+        if p.product_id not in catalog_map and p.product:
+            catalog_map[p.product_id] = SupplierCatalogItemResponse(
+                product_id=p.product_id,
+                product_name=p.product.name,
+                category=p.product.category,
+                unit=p.unit or p.product.unit,
+                unit_price=p.unit_price,
+                package_quantity=getattr(p.product, "package_quantity", 1.0) or 1.0,
+                minimum_order_quantity=1.0,
+                price_source="purchase_history",
+                is_global=bool(sup.is_global or sup.source_type == "global"),
+                notes="По данным предыдущих поставок",
+            )
+
+    # 3. If catalog is still empty (e.g. freshly created supplier with no offers yet),
+    # provide existing active products in this organization as options
+    if not catalog_map:
+        all_prods = db.query(Product).filter(
+            Product.organization_id == organization_id,
+            Product.is_active == True,
+        ).all()
+        for p in all_prods:
+            catalog_map[p.id] = SupplierCatalogItemResponse(
+                product_id=p.id,
+                product_name=p.name,
+                category=p.category,
+                unit=p.unit,
+                unit_price=1000.0,
+                package_quantity=p.package_quantity or 1.0,
+                minimum_order_quantity=1.0,
+                price_source="catalog",
+                is_global=False,
+                notes="Базовый каталог",
+            )
+
+    return list(catalog_map.values())
 
 
 @router.post("", response_model=SupplierResponse, status_code=status.HTTP_201_CREATED)

@@ -56,6 +56,12 @@ export function App() {
   });
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
   const [comparisonQuantity, setComparisonQuantity] = useState<number | null>(null);
+  const [orderPreFill, setOrderPreFill] = useState<{
+    supplierId?: number;
+    productId?: number;
+    quantity?: number;
+    unitPrice?: number;
+  } | null>(null);
 
   const [period, setPeriod] = useState<string>('30d');
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
@@ -157,12 +163,25 @@ export function App() {
     }
   }, [user, currentOrgId, refreshKey]);
 
-  const handleNavigate = (tab: string, productId?: number, initialQty?: number) => {
+  const handleNavigate = (
+    tab: string,
+    productId?: number,
+    initialQty?: number,
+    orderPreFillData?: {
+      supplierId?: number;
+      productId?: number;
+      quantity?: number;
+      unitPrice?: number;
+    }
+  ) => {
     if (productId !== undefined) {
       setSelectedProductId(productId);
     }
     if (initialQty !== undefined) {
       setComparisonQuantity(initialQty);
+    }
+    if (orderPreFillData) {
+      setOrderPreFill(orderPreFillData);
     }
     setActiveTab(tab);
     const newPath = tab === 'dashboard' ? '/' : `/${tab}`;
@@ -362,6 +381,14 @@ export function App() {
               key={`comp-${currentOrgId}-${selectedProductId}-${refreshKey}`}
               selectedProductId={selectedProductId}
               initialQuantity={comparisonQuantity}
+              onGoToOrder={(supplierId, productId, quantity, unitPrice) => {
+                handleNavigate('orders', undefined, undefined, {
+                  supplierId,
+                  productId,
+                  quantity,
+                  unitPrice,
+                });
+              }}
             />
           )}
 
@@ -391,6 +418,8 @@ export function App() {
             <OrdersPage
               key={`ord-${currentOrgId}-${refreshKey}`}
               onRefreshAux={refreshAuxData}
+              prefillOrder={orderPreFill}
+              onClearPrefill={() => setOrderPreFill(null)}
             />
           )}
 

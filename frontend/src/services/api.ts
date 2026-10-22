@@ -18,6 +18,8 @@ import {
   SampleFileInfo,
   PurchaseOrder,
   CreatePurchaseOrderData,
+  UpdatePurchaseOrderData,
+  SupplierCatalogItem,
   InventoryMovement,
   StockAdjustmentData,
   WriteOffData,
@@ -213,7 +215,7 @@ export const api = {
     const res = await client.post<PurchaseOrder>('/orders', data);
     return res.data;
   },
-  updateOrder: async (id: number, data: Partial<CreatePurchaseOrderData>): Promise<PurchaseOrder> => {
+  updateOrder: async (id: number, data: UpdatePurchaseOrderData): Promise<PurchaseOrder> => {
     const res = await client.put<PurchaseOrder>(`/orders/${id}`, data);
     return res.data;
   },
@@ -289,6 +291,10 @@ export const api = {
   },
   getSupplierOffers: async (supplierId: number): Promise<any[]> => {
     const res = await client.get<any[]>(`/suppliers/${supplierId}/offers`);
+    return res.data;
+  },
+  getSupplierCatalog: async (supplierId: number): Promise<SupplierCatalogItem[]> => {
+    const res = await client.get<SupplierCatalogItem[]>(`/suppliers/${supplierId}/catalog`);
     return res.data;
   },
   addSupplierOffer: async (

@@ -308,7 +308,37 @@ export interface CreatePurchaseOrderData {
     ordered_quantity?: number;
     quantity: number;
     unit_price: number;
+    unit?: string;
   }[];
+}
+
+export interface UpdatePurchaseOrderData {
+  status?: 'draft' | 'confirmed' | 'cancelled';
+  supplier_id?: number;
+  order_date?: string;
+  expected_delivery_date?: string | null;
+  delivery_cost?: number;
+  notes?: string | null;
+  items?: {
+    product_id: number;
+    ordered_quantity?: number;
+    quantity: number;
+    unit_price: number;
+    unit?: string;
+  }[];
+}
+
+export interface SupplierCatalogItem {
+  product_id: number;
+  product_name: string;
+  category?: string;
+  unit: string;
+  unit_price: number;
+  package_quantity: number;
+  minimum_order_quantity: number;
+  price_source: string;
+  is_global: boolean;
+  notes?: string;
 }
 
 export interface InventoryMovement {
