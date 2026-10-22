@@ -7,6 +7,9 @@ import {
   ArrowDownRight,
   RefreshCw,
   Wallet,
+  Download,
+  Trash2,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { FinancialTransaction, FinanceSummary } from '../types';
 import { api } from '../services/api';
@@ -56,6 +59,16 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchData();
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Вы действительно хотите удалить эту операцию?')) return;
+    try {
+      await api.deleteTransaction(id);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Ошибка удаления операции');
+    }
   };
 
   return (
@@ -170,14 +183,34 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
             </button>
           </div>
 
-          {/* Add Operation button */}
-          <button
-            onClick={onOpenAddModal}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition w-full sm:w-auto sm:ml-auto"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Добавить операцию</span>
-          </button>
+          {/* Export and Add Operation */}
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+            <a
+              href={api.getFinancesExportUrl('excel')}
+              download
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0B0F17] hover:bg-slate-800 text-slate-300 border border-[#243045] text-xs transition"
+              title="Экспорт в Excel"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Excel</span>
+            </a>
+            <a
+              href={api.getFinancesExportUrl('csv')}
+              download
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0B0F17] hover:bg-slate-800 text-slate-300 border border-[#243045] text-xs transition"
+              title="Экспорт в CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" />
+              <span>CSV</span>
+            </a>
+            <button
+              onClick={onOpenAddModal}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition flex-1 sm:flex-initial"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Добавить операцию</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -211,6 +244,7 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
                   <th className="py-3 px-4 font-medium">Тип</th>
                   <th className="py-3 px-4 font-medium">Источник</th>
                   <th className="py-3 px-4 font-medium text-right">Сумма</th>
+                  <th className="py-3 px-4 font-medium text-right">Действие</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#243045]/60 text-slate-300">
@@ -252,6 +286,15 @@ export const FinancesPage: React.FC<FinancesPageProps> = ({ onOpenAddModal }) =>
                         {tx.transaction_type === 'income' ? '+' : '−'}
                         {formatTenge(tx.amount)}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleDelete(tx.id)}
+                        title="Удалить операцию"
+                        className="p-1 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))}

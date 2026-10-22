@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import List, Dict, Any, Tuple, Optional
 import pandas as pd
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 from backend.models.models import (
     FinancialTransaction,
     Purchase,
@@ -280,6 +280,12 @@ class ImportService:
                             Supplier.name.ilike(str(sup_name).strip()),
                         ).first()
                         if not supplier:
+                            supplier = db.query(Supplier).filter(
+                                or_(Supplier.is_global == True, Supplier.source_type == "global"),
+                                Supplier.name.ilike(str(sup_name).strip()),
+                            ).first()
+
+                        if not supplier:
                             supplier = Supplier(
                                 organization_id=organization_id,
                                 name=str(sup_name).strip(),
@@ -399,6 +405,12 @@ class ImportService:
                             Supplier.name.ilike(str(sup_name).strip()),
                         ).first()
                         if not supplier:
+                            supplier = db.query(Supplier).filter(
+                                or_(Supplier.is_global == True, Supplier.source_type == "global"),
+                                Supplier.name.ilike(str(sup_name).strip()),
+                            ).first()
+
+                        if not supplier:
                             supplier = Supplier(
                                 organization_id=organization_id,
                                 name=str(sup_name).strip(),
@@ -479,8 +491,44 @@ class ImportService:
             )
 
     @staticmethod
+    def generate_template(import_type: str) -> bytes:
+        if import_type == "finances":
+            data = [
+                {"Дата": "2026-10-15", "Описание": "Выручка за смену (бар)", "Сумма": 125000, "Тип": "Доход", "Категория": "Выручка / Продажи"},
+                {"Дата": "2026-10-15", "Описание": "Закупка молока у поставщика", "Сумма": 21000, "Тип": "Расход", "Категория": "Закупка молока и продуктов"},
+            ]
+            sheet = "Финансовые операции"
+        elif import_type == "purchases":
+            data = [
+                {"Дата закупки": "2026-10-15", "Наименование товара": "Кофе Espresso Blend", "Поставщик": "КофеОпт Астана", "Количество": 10, "Единица": "кг", "Цена за единицу": 8500, "Итоговая сумма": 85000},
+            ]
+            sheet = "История закупок"
+        elif import_type == "inventory":
+            data = [
+                {"Наименование": "Кофе Espresso Blend", "Категория": "Кофе", "Текущий остаток": 18.5, "Единица": "кг", "Минимальный остаток": 10.0},
+                {"Наименование": "Молоко 3.2%", "Категория": "Молочные продукты", "Текущий остаток": 25.0, "Единица": "л", "Минимальный остаток": 20.0},
+            ]
+            sheet = "Остатки склада"
+        elif import_type == "supplier_prices":
+            data = [
+                {"Поставщик": "КофеОпт Астана", "Товар": "Кофе Espresso Blend", "Цена": 8200, "Единица": "кг", "Фасовка": 1, "Мин. заказ": 5, "Доставка": 2000},
+                {"Поставщик": "Tasty Coffee B2B", "Товар": "Кофе Espresso Blend", "Цена": 7900, "Единица": "кг", "Фасовка": 1, "Мин. заказ": 10, "Доставка": 0},
+            ]
+            sheet = "Прайс-листы поставщиков"
+        else:
+            raise ValueError(f"Неизвестный тип шаблона: {import_type}")
+
+        df = pd.DataFrame(data)
+        out = io.BytesIO()
+        with pd.ExcelWriter(out, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name=sheet)
+        out.seek(0)
+        return out.getvalue()
+
+    @staticmethod
     def get_batches(db: Session, organization_id: int = 1) -> List[ImportBatchResponse]:
         batches = db.query(ImportBatch).filter(
             ImportBatch.organization_id == organization_id
         ).order_by(desc(ImportBatch.created_at)).all()
-        return [ImportBatchResponse.from_orm(b) for b in batches]
+        return [ImportBatchResponse.model_validate(b) for b in batches]
+

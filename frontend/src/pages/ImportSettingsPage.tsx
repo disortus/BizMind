@@ -301,8 +301,90 @@ export const ImportSettingsPage: React.FC<ImportSettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Sample Demo Files & Reset Demo (1 col) */}
+        {/* Right Column: Templates, Sample Demo Files & Reset Demo (1 col) */}
         <div className="space-y-6">
+          {/* Clean Import Templates */}
+          <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-4">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+              <span>Шаблоны таблиц для заполнения</span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              Скачайте готовый пустой шаблон с правильными заголовками колонок для заполнения своими данными:
+            </p>
+
+            <div className="space-y-2">
+              <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#243045] flex items-center justify-between text-xs">
+                <div>
+                  <div className="font-semibold text-white">Финансовые операции</div>
+                  <div className="text-[10px] text-slate-500">Доходы, расходы, категории</div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <a
+                    href={api.getTemplateDownloadUrl('finances', 'excel')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-emerald-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .XLSX
+                  </a>
+                  <a
+                    href={api.getTemplateDownloadUrl('finances', 'csv')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-cyan-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .CSV
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#243045] flex items-center justify-between text-xs">
+                <div>
+                  <div className="font-semibold text-white">Прайс-листы поставщиков</div>
+                  <div className="text-[10px] text-slate-500">Товары, цены, поставщики, мин. объемы</div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <a
+                    href={api.getTemplateDownloadUrl('supplier_offers', 'excel')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-emerald-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .XLSX
+                  </a>
+                  <a
+                    href={api.getTemplateDownloadUrl('supplier_offers', 'csv')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-cyan-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .CSV
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#0B0F17] border border-[#243045] flex items-center justify-between text-xs">
+                <div>
+                  <div className="font-semibold text-white">Остатки склада</div>
+                  <div className="text-[10px] text-slate-500">Наименование, SKU, остаток, минимум</div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <a
+                    href={api.getTemplateDownloadUrl('inventory', 'excel')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-emerald-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .XLSX
+                  </a>
+                  <a
+                    href={api.getTemplateDownloadUrl('inventory', 'csv')}
+                    download
+                    className="px-2 py-1 rounded-lg bg-[#161F30] hover:bg-slate-700 text-cyan-400 border border-[#243045] text-[11px] font-mono transition"
+                  >
+                    .CSV
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Sample Files Download */}
           <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">

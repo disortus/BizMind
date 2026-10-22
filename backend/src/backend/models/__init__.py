@@ -4,10 +4,16 @@ from backend.models.models import (
     Product,
     Supplier,
     Purchase,
+    PurchaseOrder,
+    PurchaseOrderItem,
     SupplierOffer,
+    OfferPriceHistory,
+    InventoryMovement,
     FinancialTransaction,
     Notification,
     ImportBatch,
+    ActivityLog,
+    ReportTemplate,
 )
 
 __all__ = [
@@ -16,8 +22,15 @@ __all__ = [
     "Product",
     "Supplier",
     "Purchase",
+    "PurchaseOrder",
+    "PurchaseOrderItem",
     "SupplierOffer",
+    "OfferPriceHistory",
+    "InventoryMovement",
     "FinancialTransaction",
     "Notification",
     "ImportBatch",
+    "ActivityLog",
+    "ReportTemplate",
 ]
+

@@ -12,8 +12,9 @@ from backend.api import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure tables exist
-    Base.metadata.create_all(bind=engine)
+    # Ensure tables exist and run auto-migrations
+    from backend.migrations import run_auto_migrations
+    run_auto_migrations(engine)
     db = SessionLocal()
     try:
         org = db.query(Organization).first()

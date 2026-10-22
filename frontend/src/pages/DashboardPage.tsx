@@ -12,6 +12,13 @@ import {
   ChevronRight,
   PieChart as PieIcon,
   Calculator,
+  Download,
+  FileSpreadsheet,
+  CheckCircle2,
+  Building,
+  Clock,
+  ExternalLink,
+  FileText,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -32,7 +39,7 @@ import { PriceAlertBanner } from '../components/PriceAlertBanner';
 
 interface DashboardPageProps {
   period: string;
-  onNavigate: (tab: string, productId?: number) => void;
+  onNavigate: (tab: string, productId?: number, initialQty?: number) => void;
 }
 
 const CATEGORY_COLORS = [
@@ -49,6 +56,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [interactiveQty, setInteractiveQty] = useState(20);
+  const [demoScenarioTab, setDemoScenarioTab] = useState<'A' | 'B'>(() =>
+    api.getActiveOrgId() === 2 ? 'B' : 'A'
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -89,6 +99,256 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
     return (
       <div className="p-8 text-center text-slate-400">
         Не удалось загрузить данные дашборда.
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // CAFE AROMA: INITIAL ADOPTION ONBOARDING VIEW (Empty State)
+  // =========================================================================
+  if (data.is_empty) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+        {/* Onboarding Hero Banner */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#162725] via-[#161F30] to-[#0F172A] border border-emerald-500/30 relative overflow-hidden shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Сценарий А: Первоначальное внедрение
+                </span>
+                <span className="text-xs text-slate-400">• Кофейня «Cafe Aroma»</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Добро пожаловать в BizMind!
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+                Кофейня «Cafe Aroma» уже успешно работает в офлайне, но исторические данные ещё не перенесены в систему. При первом входе база данных пуста — здесь нет выдуманных финансовых показателей или ложных графиков.
+              </p>
+              <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                Начните работу с постепенного импорта файлов Excel или добавьте поставщиков и товары вручную. Система будет раскрывать аналитику шаг за шагом по мере наполнения.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0">
+              <button
+                onClick={() => onNavigate('import')}
+                className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Перейти к импорту данных</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onNavigate('comparison')}
+                className="px-5 py-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-white font-semibold text-xs border border-slate-700 flex items-center justify-center gap-2 transition"
+              >
+                <Building className="w-4 h-4 text-purple-400" />
+                <span>Общий каталог поставщиков</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Current Adoption Status Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#243045]">
+            <div className="text-[11px] text-slate-400 font-medium">Финансовые операции</div>
+            <div className="text-xl font-bold font-mono text-white mt-1">0 записей</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Ожидает загрузки Excel</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#243045]">
+            <div className="text-[11px] text-slate-400 font-medium">История закупок</div>
+            <div className="text-xl font-bold font-mono text-white mt-1">0 партий</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Накладные вне системы</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#161F30] border border-[#243045]">
+            <div className="text-[11px] text-slate-400 font-medium">Остатки на складе</div>
+            <div className="text-xl font-bold font-mono text-white mt-1">0 товаров</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Требуется инвентаризация</div>
+          </div>
+          <div className="p-4 rounded-2xl bg-[#161F30] border border-purple-500/30">
+            <div className="text-[11px] text-purple-300 font-medium">Общая база BizMind</div>
+            <div className="text-xl font-bold font-mono text-purple-200 mt-1">5 поставщиков</div>
+            <div className="text-[10px] text-purple-400/80 mt-0.5">Доступны для сравнения</div>
+          </div>
+        </div>
+
+        {/* Step-by-Step Onboarding Roadmap */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] space-y-4">
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+              <Clock className="w-4 h-4 text-emerald-400" />
+              Пошаговый план первоначального внедрения Cafe Aroma
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Скачайте подготовленные демонстрационные файлы кофейни или используйте собственные таблицы для импорта
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+            {/* Step 1: Finances */}
+            <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#243045] flex flex-col justify-between space-y-3 group hover:border-[#334155] transition">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-bold text-white">Шаг 1. Импорт финансовых операций</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Excel</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Загрузите выгрузку из кассы и банковские выписки (53 строки: аренда, ЗП бариста, коммуналка, выручка).
+                </p>
+                <div className="mt-2 text-[11px] text-emerald-400 font-mono">
+                  Файл: historical_finances.xlsx
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-[#243045]/60">
+                <a
+                  href={api.downloadSampleUrl('historical_finances.xlsx')}
+                  download
+                  className="flex-1 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Скачать файл</span>
+                </a>
+                <button
+                  onClick={() => onNavigate('import')}
+                  className="py-2 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1 transition"
+                >
+                  <span>Загрузить</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Step 2: Purchases */}
+            <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#243045] flex flex-col justify-between space-y-3 group hover:border-[#334155] transition">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-bold text-white">Шаг 2. Импорт истории закупок</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Excel</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Загрузите накладные по закупкам кофе, молока, стаканов и сиропов для анализа истории цен.
+                </p>
+                <div className="mt-2 text-[11px] text-emerald-400 font-mono">
+                  Файл: historical_purchases.xlsx
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-[#243045]/60">
+                <a
+                  href={api.downloadSampleUrl('historical_purchases.xlsx')}
+                  download
+                  className="flex-1 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Скачать файл</span>
+                </a>
+                <button
+                  onClick={() => onNavigate('import')}
+                  className="py-2 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1 transition"
+                >
+                  <span>Загрузить</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Step 3: Inventory */}
+            <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#243045] flex flex-col justify-between space-y-3 group hover:border-[#334155] transition">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-bold text-white">Шаг 3. Загрузка остатков склада</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Excel</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Начальная ревизия остатков ингредиентов и неснижаемых лимитов для запуска прогнозирования дефицита.
+                </p>
+                <div className="mt-2 text-[11px] text-emerald-400 font-mono">
+                  Файл: historical_inventory.xlsx
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-[#243045]/60">
+                <a
+                  href={api.downloadSampleUrl('historical_inventory.xlsx')}
+                  download
+                  className="flex-1 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Скачать файл</span>
+                </a>
+                <button
+                  onClick={() => onNavigate('import')}
+                  className="py-2 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1 transition"
+                >
+                  <span>Загрузить</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Step 4: Price Lists */}
+            <div className="p-4 rounded-xl bg-[#0B0F17] border border-[#243045] flex flex-col justify-between space-y-3 group hover:border-[#334155] transition">
+              <div>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-bold text-white">Шаг 4. Прайс-листы поставщиков</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Excel</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Загрузите прайсы поставщиков HoReCa. Система мгновенно сопоставит цены и выделит потенциал экономии.
+                </p>
+                <div className="mt-2 text-[11px] text-emerald-400 font-mono">
+                  Файл: supplier_price_lists.xlsx
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-[#243045]/60">
+                <a
+                  href={api.downloadSampleUrl('supplier_price_lists.xlsx')}
+                  download
+                  className="flex-1 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Скачать файл</span>
+                </a>
+                <button
+                  onClick={() => onNavigate('import')}
+                  className="py-2 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1 transition"
+                >
+                  <span>Загрузить</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Catalog Feature Callout */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-[#161F30] border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+              <Building className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-white">
+                Общая база поставщиков BizMind уже подключена
+              </h4>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Вам доступны 5 проверенных поставщиков (зерно, молоко, сиропы, стаканы, хозтовары). Они видны во всех организациях независимо от загрузки персональных данных.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('comparison')}
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 transition shadow-md"
+          >
+            <span>Смотреть каталог</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -457,7 +717,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
               </div>
 
               <button
-                onClick={() => onNavigate('comparison', featuredComp.product_id)}
+                onClick={() => onNavigate('comparison', featuredComp.product_id, interactiveQty)}
                 className="w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md transition"
               >
                 <span>Сравнить</span>
@@ -530,63 +790,193 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
         </div>
 
         {/* Quick Demo Shortcuts & Actions (1 col) */}
-        <div className="p-4 sm:p-6 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col justify-between space-y-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#161F30] border border-[#243045] flex flex-col justify-between space-y-3.5 shadow-xl">
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">Сценарии демонстрации</h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Ключевые точки пользовательского пути жюри
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                Сценарии демонстрации
+              </h3>
+              <span className="text-[10px] text-slate-400 font-mono bg-[#0B0F17] px-2 py-0.5 rounded border border-[#243045]">
+                {demoScenarioTab === 'A' ? 'Кейс А: Cafe Aroma' : 'Кейс Б: Daily Cup'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-3">
+              Маршрут демонстрации бизнес-логики и сценариев системы для жюри
             </p>
 
-            <div className="space-y-2.5">
+            {/* Scenario Switcher Tabs */}
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#0B0F17] border border-[#243045] mb-3 text-xs">
               <button
-                onClick={() => onNavigate('import')}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
+                type="button"
+                onClick={() => setDemoScenarioTab('A')}
+                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition text-center ${
+                  demoScenarioTab === 'A'
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    1. Загрузка старого Excel
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Импорт legacy_finances.xlsx
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
+                Кейс А: Внедрение
               </button>
-
               <button
-                onClick={() => onNavigate('comparison', 1)}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
+                type="button"
+                onClick={() => setDemoScenarioTab('B')}
+                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition text-center ${
+                  demoScenarioTab === 'B'
+                    ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    2. Сравнение поставщиков кофе
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Aroma Direct vs Coffee Roasters (+15%)
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
-              </button>
-
-              <button
-                onClick={() => onNavigate('forecast')}
-                className="w-full p-3 rounded-xl bg-[#0B0F17] hover:bg-slate-800/60 border border-[#243045] text-left transition flex items-center justify-between group"
-              >
-                <div>
-                  <div className="text-xs font-semibold text-white group-hover:text-emerald-400 transition">
-                    3. Прогноз потребности в молоке
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Остаток 12л при минимуме 25л
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition" />
+                Кейс Б: Экономия
               </button>
             </div>
+
+            {/* Steps List for Scenario A */}
+            {demoScenarioTab === 'A' ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('import')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">1</span>
+                      Импорт данных из Excel
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Загрузка финансовых выписок, остатков и накладных
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('purchases', 1)}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">2</span>
+                      Анализ скачка цен на кофе
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Рост цены зерна +15% (12 000 → 13 800 ₸)
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('comparison', 1, 20)}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">3</span>
+                      Сопоставление поставщиков
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Экономия 36 000 ₸ с Kazakh Coffee Roasters
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('orders')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] flex items-center justify-center font-bold">4</span>
+                      Заказ по прайс-листу
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Каталог поставщика, мин. заказ и бланк
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('forecast')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">1</span>
+                      Прогноз кассовых разрывов
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Моделирование остатков денег на 30 дней
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('inventory')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">2</span>
+                      Складской учет и остатки
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Неснижаемый запас и списания сырья
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('reports')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">3</span>
+                      Управленческие отчеты
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Конструктор отчетов и выгрузка в Excel / CSV
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigate('settings')}
+                  className="w-full p-2.5 rounded-xl bg-[#0B0F17] hover:bg-slate-800/80 border border-[#243045] text-left transition flex items-start justify-between group"
+                >
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] flex items-center justify-center font-bold">4</span>
+                      Команда и журнал аудита
+                    </div>
+                    <div className="text-[11px] text-slate-400 leading-tight">
+                      Управление ролями и неизменяемый лог
+                    </div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 transition shrink-0 mt-0.5" />
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 text-center">
-            Все расчеты произведены на основе бизнес-логики и SQL-агрегатов без сторонних API.
+          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-[10px] text-slate-400 text-center">
+            Нажмите на любой шаг для быстрого перехода к модулю системы.
           </div>
         </div>
       </div>

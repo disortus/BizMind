@@ -42,3 +42,19 @@ def get_batches(
     db: Session = Depends(get_db)
 ):
     return ImportService.get_batches(db=db, organization_id=organization_id)
+
+
+@router.get("/templates/{import_type}")
+def get_template(import_type: str):
+    """Скачивание готового Excel-шаблона для импорта данных."""
+    from fastapi import Response
+    try:
+        content = ImportService.generate_template(import_type)
+        return Response(
+            content=content,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=template_{import_type}.xlsx"},
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

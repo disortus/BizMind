@@ -10,15 +10,59 @@ import { ComparisonPage } from './pages/ComparisonPage';
 import { ForecastPage } from './pages/ForecastPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ImportSettingsPage } from './pages/ImportSettingsPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { InventoryPage } from './pages/InventoryPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { ReportBuilderPage } from './pages/ReportBuilderPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { api } from './services/api';
 import { User, OrganizationInfo } from './types';
+
+const VALID_TABS = [
+  'dashboard',
+  'finances',
+  'purchases',
+  'comparison',
+  'forecast',
+  'notifications',
+  'import',
+  'orders',
+  'inventory',
+  'reports',
+  'settings',
+];
+
+const getTabFromPath = (path: string): { tab: string; isNotFound: boolean } => {
+  const clean = path.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!clean || clean === 'dashboard') {
+    return { tab: 'dashboard', isNotFound: false };
+  }
+  if (VALID_TABS.includes(clean)) {
+    return { tab: clean, isNotFound: false };
+  }
+  return { tab: '404', isNotFound: true };
+};
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
   const [organizations, setOrganizations] = useState<OrganizationInfo[]>([]);
   const [currentOrgId, setCurrentOrgId] = useState<number>(api.getActiveOrgId());
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+  // Initialize active tab from current URL pathname
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const { tab } = getTabFromPath(window.location.pathname);
+    return tab;
+  });
+  const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+  const [comparisonQuantity, setComparisonQuantity] = useState<number | null>(null);
+  const [orderPreFill, setOrderPreFill] = useState<{
+    supplierId?: number;
+    productId?: number;
+    quantity?: number;
+    unitPrice?: number;
+  } | null>(null);
+
   const [period, setPeriod] = useState<string>('30d');
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -27,33 +71,65 @@ export function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Synchronize browser history and popstate
+  useEffect(() => {
+    const handlePopState = () => {
+      const { tab } = getTabFromPath(window.location.pathname);
+      setActiveTab(tab);
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // Check login state and load available organizations on initial mount
   useEffect(() => {
-    if (!api.hasSavedOrg()) {
-      // No selected demo space yet -> show LoginPage with Case A and Case B cards
-      api.getOrganizations()
-        .then(setOrganizations)
-        .catch(() => {})
-        .finally(() => setLoading(false));
-      return;
-    }
+    const initAuth = async () => {
+      if (!api.hasSavedOrg()) {
+        try {
+          const orgs = await api.getOrganizations();
+          setOrganizations(orgs);
+        } catch {
+          // ignore
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
 
-    Promise.all([
-      api.getOrganizations().catch(() => []),
-      api.getMe().catch(() => null),
-    ])
-      .then(([orgs, u]) => {
+      try {
+        const [orgs, u] = await Promise.all([
+          api.getOrganizations().catch(() => []),
+          api.getMe().catch(() => null),
+        ]);
         setOrganizations(orgs);
+
         if (u) {
           setUser(u);
           if (u.organization?.id) {
             setCurrentOrgId(u.organization.id);
           }
         } else {
-          api.logout();
+          // Graceful reload recovery: attempt demoLogin with the active saved org
+          const activeOrg = api.getActiveOrgId();
+          const recoveredUser = await api.demoLogin(activeOrg).catch(() => null);
+          if (recoveredUser) {
+            setUser(recoveredUser);
+            if (recoveredUser.organization?.id) {
+              setCurrentOrgId(recoveredUser.organization.id);
+            }
+          } else {
+            api.logout();
+          }
         }
-      })
-      .finally(() => setLoading(false));
+      } catch (e) {
+        console.error('Auth initialization error:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const handleReturnToCases = () => {
@@ -61,6 +137,8 @@ export function App() {
     setUser(null);
     setSelectedProductId(null);
     setActiveTab('dashboard');
+    setCurrentPath('/');
+    window.history.pushState(null, '', '/');
     setIsMobileMenuOpen(false);
     api.getOrganizations().then(setOrganizations).catch(() => {});
   };
@@ -85,12 +163,31 @@ export function App() {
     }
   }, [user, currentOrgId, refreshKey]);
 
-  const handleNavigate = (tab: string, productId?: number) => {
+  const handleNavigate = (
+    tab: string,
+    productId?: number,
+    initialQty?: number,
+    orderPreFillData?: {
+      supplierId?: number;
+      productId?: number;
+      quantity?: number;
+      unitPrice?: number;
+    }
+  ) => {
     if (productId !== undefined) {
       setSelectedProductId(productId);
     }
+    if (initialQty !== undefined) {
+      setComparisonQuantity(initialQty);
+    }
+    if (orderPreFillData) {
+      setOrderPreFill(orderPreFillData);
+    }
     setActiveTab(tab);
+    const newPath = tab === 'dashboard' ? '/' : `/${tab}`;
+    setCurrentPath(newPath);
     setIsMobileMenuOpen(false);
+    window.history.pushState(null, '', newPath);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -157,33 +254,58 @@ export function App() {
         };
       case 'finances':
         return {
-          title: 'Финансовые операции',
-          subtitle: `Журнал доходов и расходов предприятия ${orgLabel} за выбранный период`,
+          title: 'Финансы и ДДС',
+          subtitle: 'Учет доходов, операционных расходов и контроль кассовых разрывов',
         };
       case 'purchases':
         return {
-          title: 'История закупок',
-          subtitle: 'Детализация партий сырья, упаковки и динамика цен',
+          title: 'Закупки и динамика цен',
+          subtitle: 'Анализ закупочных цен, динамика инфляции сырья и журнал поставок',
         };
       case 'comparison':
         return {
-          title: 'Сравнение цен поставщиков',
-          subtitle: 'Сопоставление прайс-листов и оценка потенциальной разницы',
+          title: 'Сравнение поставщиков',
+          subtitle: 'Сопоставление цен, поиск выгодных условий и калькулятор объема партий',
         };
       case 'forecast':
         return {
-          title: 'Прогноз остатков и потребности',
-          subtitle: 'Статистический расчет расхода сырья и рекомендации к заказу',
+          title: 'Прогноз кассовых разрывов',
+          subtitle: 'Моделирование остатков денег на 30 дней с учетом платежей поставщикам',
         };
       case 'notifications':
         return {
           title: 'Центр уведомлений',
-          subtitle: 'Сигналы о скачках цен, неснижаемых остатках и динамике бюджета',
+          subtitle: 'Системные алерты о росте цен, кассовых разрывах и дефиците остатков',
         };
       case 'import':
         return {
-          title: 'Импорт и управление данными',
-          subtitle: `Загрузка внешних таблиц Excel/CSV и управление базой ${orgLabel}`,
+          title: 'Импорт и загрузка данных',
+          subtitle: 'Загрузка финансовых выписок, прайс-листов поставщиков и накладных Excel / CSV',
+        };
+      case 'orders':
+        return {
+          title: 'Заказы поставщикам',
+          subtitle: 'Оформление поставок, отслеживание статусов и складская приемка',
+        };
+      case 'inventory':
+        return {
+          title: 'Складской учет',
+          subtitle: 'Учет фактических остатков сырья, инвентаризация и аудит списаний',
+        };
+      case 'reports':
+        return {
+          title: 'Шаблоны отчётов',
+          subtitle: 'Конструктор аналитических отчетов, интерактивный аудит и выгрузка в Excel / CSV',
+        };
+      case 'settings':
+        return {
+          title: 'Настройки и администрирование',
+          subtitle: 'Реквизиты организации, ролевой доступ и журнал аудита безопасности',
+        };
+      case '404':
+        return {
+          title: 'Страница не найдена',
+          subtitle: 'Ошибка 404 — запрошенный раздел не найден',
         };
       default:
         return {
@@ -199,11 +321,10 @@ export function App() {
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 flex relative overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar
-        activeTab={activeTab}
+        activeTab={activeTab === '404' ? 'dashboard' : activeTab}
         onSelectTab={(tab) => {
           setSelectedProductId(null);
-          setActiveTab(tab);
-          setIsMobileMenuOpen(false);
+          handleNavigate(tab);
         }}
         unreadCount={unreadCount}
         user={user}
@@ -259,6 +380,15 @@ export function App() {
             <ComparisonPage
               key={`comp-${currentOrgId}-${selectedProductId}-${refreshKey}`}
               selectedProductId={selectedProductId}
+              initialQuantity={comparisonQuantity}
+              onGoToOrder={(supplierId, productId, quantity, unitPrice) => {
+                handleNavigate('orders', undefined, undefined, {
+                  supplierId,
+                  productId,
+                  quantity,
+                  unitPrice,
+                });
+              }}
             />
           )}
 
@@ -281,6 +411,43 @@ export function App() {
             <ImportSettingsPage
               key={`import-${currentOrgId}-${refreshKey}`}
               onDataImported={handleDataChanged}
+            />
+          )}
+
+          {activeTab === 'orders' && (
+            <OrdersPage
+              key={`ord-${currentOrgId}-${refreshKey}`}
+              onRefreshAux={refreshAuxData}
+              prefillOrder={orderPreFill}
+              onClearPrefill={() => setOrderPreFill(null)}
+            />
+          )}
+
+          {activeTab === 'inventory' && (
+            <InventoryPage
+              key={`inv-${currentOrgId}-${refreshKey}`}
+            />
+          )}
+
+          {activeTab === 'reports' && (
+            <ReportBuilderPage
+              key={`rep-${currentOrgId}-${refreshKey}`}
+              onNavigateToImport={() => handleNavigate('import')}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsPage
+              key={`set-${currentOrgId}-${refreshKey}`}
+              currentUser={user}
+            />
+          )}
+
+          {activeTab === '404' && (
+            <NotFoundPage
+              currentPath={currentPath}
+              onNavigate={handleNavigate}
+              onReturnToCases={handleReturnToCases}
             />
           )}
         </main>

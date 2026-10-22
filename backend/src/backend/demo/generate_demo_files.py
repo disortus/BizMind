@@ -120,9 +120,14 @@ def generate_all_excel_files():
     df_finances = df_finances.sort_values("Дата").reset_index(drop=True)
     df_finances["Дата"] = df_finances["Дата"].dt.strftime("%Y-%m-%d")
     df_finances.to_excel(DEMO_DATA_DIR / "legacy_finances.xlsx", index=False)
-    print(f"Created {DEMO_DATA_DIR / 'legacy_finances.xlsx'} with {len(df_finances)} rows.")
+    
+    # Save into dedicated onboarding folder for Cafe Aroma
+    onboarding_dir = DEMO_DATA_DIR / "onboarding" / "cafe_aroma"
+    onboarding_dir.mkdir(parents=True, exist_ok=True)
+    df_finances.to_excel(onboarding_dir / "historical_finances.xlsx", index=False)
+    print(f"Created {DEMO_DATA_DIR / 'legacy_finances.xlsx'} and {onboarding_dir / 'historical_finances.xlsx'} with {len(df_finances)} rows.")
 
-    # 2. legacy_purchases.xlsx
+    # 2. legacy_purchases.xlsx / historical_purchases.xlsx
     purchases = []
     for days_ago, price in [(85, 10000.0), (55, 10000.0), (28, 10000.0), (6, 11500.0)]:
         purchases.append({
@@ -211,9 +216,10 @@ def generate_all_excel_files():
     df_purchases = df_purchases.sort_values("Дата закупки").reset_index(drop=True)
     df_purchases["Дата закупки"] = df_purchases["Дата закупки"].dt.strftime("%Y-%m-%d")
     df_purchases.to_excel(DEMO_DATA_DIR / "legacy_purchases.xlsx", index=False)
-    print(f"Created {DEMO_DATA_DIR / 'legacy_purchases.xlsx'} with {len(df_purchases)} rows.")
+    df_purchases.to_excel(onboarding_dir / "historical_purchases.xlsx", index=False)
+    print(f"Created {DEMO_DATA_DIR / 'legacy_purchases.xlsx'} and {onboarding_dir / 'historical_purchases.xlsx'} with {len(df_purchases)} rows.")
 
-    # 3. legacy_inventory.xlsx
+    # 3. legacy_inventory.xlsx / historical_inventory.xlsx
     inventory = [
         {"Наименование": "Кофе в зернах Espresso Blend 100% Арабика", "Категория": "Кофе", "Текущий остаток": 18.0, "Единица": "кг", "Минимальный остаток": 15.0},
         {"Наименование": "Молоко ультрапастеризованное 3.2%", "Категория": "Молочная продукция", "Текущий остаток": 12.0, "Единица": "л", "Минимальный остаток": 25.0},
@@ -227,9 +233,10 @@ def generate_all_excel_files():
         {"Наименование": "Чай зеленый Сенча", "Категория": "Чай", "Текущий остаток": 2.5, "Единица": "кг", "Минимальный остаток": 2.0}
     ]
     pd.DataFrame(inventory).to_excel(DEMO_DATA_DIR / "legacy_inventory.xlsx", index=False)
-    print(f"Created {DEMO_DATA_DIR / 'legacy_inventory.xlsx'} with {len(inventory)} rows.")
+    pd.DataFrame(inventory).to_excel(onboarding_dir / "historical_inventory.xlsx", index=False)
+    print(f"Created {DEMO_DATA_DIR / 'legacy_inventory.xlsx'} and {onboarding_dir / 'historical_inventory.xlsx'} with {len(inventory)} rows.")
 
-    # 4. supplier_price_list.xlsx (Cafe Aroma)
+    # 4. supplier_price_list.xlsx / supplier_price_lists.xlsx (Cafe Aroma)
     supplier_prices = [
         {"Поставщик": "Aroma Direct", "Товар": "Кофе в зернах Espresso Blend 100% Арабика", "Фасовка": 1.0, "Единица": "кг", "Цена": 10350.0, "Мин. заказ": 20.0, "Доставка": 0.0, "Дата обновления": (today - timedelta(days=2)).strftime("%Y-%m-%d")},
         {"Поставщик": "BeanTrade Almaty", "Товар": "Кофе в зернах Espresso Blend 100% Арабика", "Фасовка": 1.0, "Единица": "кг", "Цена": 10800.0, "Мин. заказ": 15.0, "Доставка": 1500.0, "Дата обновления": (today - timedelta(days=4)).strftime("%Y-%m-%d")},
@@ -243,7 +250,8 @@ def generate_all_excel_files():
         {"Поставщик": "Barista Pro Supplies", "Товар": "Сироп Ваниль 1л", "Фасовка": 1.0, "Единица": "бут", "Цена": 3900.0, "Мин. заказ": 4.0, "Доставка": 1200.0, "Дата обновления": (today - timedelta(days=8)).strftime("%Y-%m-%d")}
     ]
     pd.DataFrame(supplier_prices).to_excel(DEMO_DATA_DIR / "supplier_price_list.xlsx", index=False)
-    print(f"Created {DEMO_DATA_DIR / 'supplier_price_list.xlsx'} with {len(supplier_prices)} rows.")
+    pd.DataFrame(supplier_prices).to_excel(onboarding_dir / "supplier_price_lists.xlsx", index=False)
+    print(f"Created {DEMO_DATA_DIR / 'supplier_price_list.xlsx'} and {onboarding_dir / 'supplier_price_lists.xlsx'} with {len(supplier_prices)} rows.")
 
     # =========================================================================
     # CASE B: DAILY CUP (Regular Long-Time User Scenario)

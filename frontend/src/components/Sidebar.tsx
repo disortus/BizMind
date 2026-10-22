@@ -15,6 +15,10 @@ import {
   LogOut,
   ArrowLeft,
   X,
+  PackageCheck,
+  Boxes,
+  Settings,
+  FileText,
 } from 'lucide-react';
 import { cn } from '../utils/formatters';
 import { User, OrganizationInfo } from '../types';
@@ -60,8 +64,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: null,
     },
     {
+      id: 'orders',
+      label: 'Заказы',
+      icon: PackageCheck,
+      badge: null,
+    },
+    {
+      id: 'inventory',
+      label: 'Склад',
+      icon: Boxes,
+      badge: null,
+    },
+    {
       id: 'purchases',
-      label: 'Закупки',
+      label: 'История закупок',
       icon: ShoppingBag,
       badge: null,
     },
@@ -87,6 +103,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'import',
       label: 'Импорт и данные',
       icon: FileSpreadsheet,
+      badge: null,
+    },
+    {
+      id: 'reports',
+      label: 'Шаблоны отчётов',
+      icon: FileText,
+      badge: 'Новое',
+    },
+    {
+      id: 'settings',
+      label: 'Настройки',
+      icon: Settings,
       badge: null,
     },
   ];

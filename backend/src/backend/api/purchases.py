@@ -53,3 +53,20 @@ def get_product_price_history(
     if not res:
         raise HTTPException(status_code=404, detail="Товар не найден")
     return res
+
+
+@router.get("/comparison/{product_id}")
+def compare_offers(
+    product_id: int,
+    quantity: float = Query(20.0, gt=0),
+    organization_id: int = Depends(get_current_organization_id),
+    db: Session = Depends(get_db),
+):
+    from backend.services.comparison_service import ComparisonService
+    comparison = ComparisonService.compare_product_offers(
+        db=db, product_id=product_id, quantity=quantity, organization_id=organization_id
+    )
+    if not comparison:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+    return comparison
+
