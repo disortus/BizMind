@@ -42,19 +42,35 @@ def update_organization_settings(
         raise HTTPException(status_code=404, detail="Организация не найдена")
 
     if data.name is not None and data.name.strip():
+        if len(data.name.strip()) < 2:
+            raise HTTPException(status_code=422, detail="Название организации должно содержать минимум 2 символа")
         org.name = data.name.strip()
+
     if data.business_type is not None:
         org.business_type = data.business_type.strip()
+
     if data.currency is not None:
         org.currency = data.currency.strip()
-    if data.alert_threshold_percent is not None:
-        org.alert_threshold_percent = max(0.1, min(100.0, data.alert_threshold_percent))
+
+    threshold = data.alert_threshold_percent if data.alert_threshold_percent is not None else data.price_alert_threshold_percent
+    if threshold is not None:
+        if threshold < 0.1 or threshold > 100.0:
+            raise HTTPException(status_code=422, detail="Порог алерта о росте цен должен быть в диапазоне от 0.1% до 100%")
+        org.alert_threshold_percent = round(float(threshold), 2)
+
     if data.address is not None:
         org.address = data.address.strip()
-    if data.phone is not None:
-        org.phone = data.phone.strip()
-    if data.email is not None:
-        org.email = data.email.strip()
+
+    phone_val = data.phone if data.phone is not None else data.contact_phone
+    if phone_val is not None:
+        org.phone = phone_val.strip()
+
+    email_val = data.email if data.email is not None else data.contact_email
+    if email_val is not None:
+        clean_email = email_val.strip().lower()
+        if clean_email and ("@" not in clean_email or "." not in clean_email):
+            raise HTTPException(status_code=422, detail="Некорректный формат контактного email")
+        org.email = clean_email
 
     db.commit()
     db.refresh(org)
@@ -71,6 +87,7 @@ def update_organization_settings(
     return org
 
 
+@router.get("/activity", response_model=List[ActivityLogResponse])
 @router.get("/activity-logs", response_model=List[ActivityLogResponse])
 def get_activity_logs(
     limit: int = Query(50, ge=1, le=200),
@@ -90,7 +107,7 @@ def get_activity_logs(
         ActivityLogResponse(
             id=l.id,
             organization_id=l.organization_id,
-            user_name=l.user.name if l.user else "Система",
+            user_name=l.user.name if l.user else (l.user_name or "Система"),
             action=l.action,
             entity_type=l.entity_type,
             entity_id=str(l.entity_id) if l.entity_id else None,
@@ -121,14 +138,23 @@ def create_organization_user(
     current_user: User = Depends(require_roles(["owner"])),
 ):
     """Добавление нового сотрудника в организацию (только Owner)."""
+    if not data.name or len(data.name.strip()) < 2:
+        raise HTTPException(status_code=422, detail="Имя сотрудника должно содержать минимум 2 символа")
+
     email_clean = data.email.strip().lower()
+    if "@" not in email_clean or "." not in email_clean:
+        raise HTTPException(status_code=422, detail="Некорректный формат email сотрудника")
+
+    if not data.password or len(data.password) < 6:
+        raise HTTPException(status_code=422, detail="Пароль должен содержать минимум 6 символов")
+
+    role_val = data.role.lower().strip()
+    if role_val not in ["owner", "manager", "employee"]:
+        raise HTTPException(status_code=422, detail="Недопустимая роль. Доступно: owner, manager, employee")
+
     existing = db.query(User).filter(User.email == email_clean).first()
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
-
-    role_val = data.role.lower()
-    if role_val not in ["owner", "manager", "employee"]:
-        raise HTTPException(status_code=400, detail="Недопустимая роль. Доступно: owner, manager, employee")
 
     new_user = User(
         organization_id=current_user.organization_id,

@@ -62,13 +62,14 @@ def get_categories(
 
 @router.get("/export")
 def export_finances(
-    format: str = Query("xlsx", pattern="^(xlsx|csv)$"),
+    format: str = Query("xlsx", pattern="^(xlsx|csv|excel)$"),
     organization_id: int = Depends(get_current_organization_id),
     db: Session = Depends(get_db),
 ):
-    content = FinanceService.export_transactions(db=db, organization_id=organization_id, format_type=format)
-    media_type = "text/csv" if format == "csv" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    filename = f"finances_org_{organization_id}.{format}"
+    normalized_format = "xlsx" if format == "excel" else format
+    content = FinanceService.export_transactions(db=db, organization_id=organization_id, format_type=normalized_format)
+    media_type = "text/csv" if normalized_format == "csv" else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    filename = f"finances_org_{organization_id}.{normalized_format}"
     return Response(
         content=content,
         media_type=media_type,

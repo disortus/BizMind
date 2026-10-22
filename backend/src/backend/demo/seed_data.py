@@ -18,6 +18,7 @@ from backend.models.models import (
     Notification,
     ImportBatch,
     ReportTemplate,
+    ActivityLog,
 )
 
 
@@ -240,7 +241,48 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
         role="owner",
         created_at=datetime(2026, 5, 1, 9, 30, 0),
     )
-    db.add(user1)
+    user1_2 = User(
+        id=12,
+        organization_id=org1.id,
+        name="Айгерим Садыкова",
+        email="manager@cafearoma.kz",
+        role="manager",
+        created_at=datetime(2026, 5, 2, 10, 0, 0),
+    )
+    user1_3 = User(
+        id=13,
+        organization_id=org1.id,
+        name="Ернар Бектур",
+        email="barista@cafearoma.kz",
+        role="employee",
+        created_at=datetime(2026, 5, 3, 11, 0, 0),
+    )
+    db.add_all([user1, user1_2, user1_3])
+    db.flush()
+
+    # Initial activity logs for Org 1 (Cafe Aroma)
+    db.add_all([
+        ActivityLog(
+            organization_id=org1.id,
+            user_id=user1.id,
+            user_name=user1.name,
+            action="SYSTEM_INIT",
+            entity_type="Organization",
+            entity_id=str(org1.id),
+            details="Регистрация демонстрационного пространства кофейни «Cafe Aroma»",
+            created_at=datetime(2026, 5, 1, 9, 15, 0),
+        ),
+        ActivityLog(
+            organization_id=org1.id,
+            user_id=user1.id,
+            user_name=user1.name,
+            action="SECURITY_SETUP",
+            entity_type="Security",
+            entity_id="rbac",
+            details="Настройка ролевого доступа сотрудников (Owner, Manager, Employee)",
+            created_at=datetime(2026, 5, 3, 11, 30, 0),
+        ),
+    ])
     db.flush()
 
     # NOTE: Org 1 has NO pre-seeded transactions, purchases, products, or stock!
@@ -275,7 +317,76 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
         role="owner",
         created_at=datetime(2026, 4, 15, 9, 30, 0),
     )
-    db.add(user2)
+    user2_2 = User(
+        id=22,
+        organization_id=org2.id,
+        name="Мадина Жумабаева",
+        email="madina@dailycup.kz",
+        role="manager",
+        created_at=datetime(2026, 4, 16, 10, 0, 0),
+    )
+    user2_3 = User(
+        id=23,
+        organization_id=org2.id,
+        name="Канат Ильясов",
+        email="procurement@dailycup.kz",
+        role="manager",
+        created_at=datetime(2026, 4, 17, 11, 0, 0),
+    )
+    user2_4 = User(
+        id=24,
+        organization_id=org2.id,
+        name="Бауржан Кусаинов",
+        email="barista@dailycup.kz",
+        role="employee",
+        created_at=datetime(2026, 4, 18, 12, 0, 0),
+    )
+    db.add_all([user2, user2_2, user2_3, user2_4])
+    db.flush()
+
+    # Initial activity logs for Org 2 (Daily Cup)
+    db.add_all([
+        ActivityLog(
+            organization_id=org2.id,
+            user_id=user2.id,
+            user_name=user2.name,
+            action="SWITCH_SUPPLIER",
+            entity_type="Supplier",
+            entity_id="102",
+            details="Оптимизация упаковки: смена поставщика на EcoTorg Kazakhstan (1 230 ₸/упак, подтвержденная экономия 34 200 ₸)",
+            created_at=datetime(2026, 8, 1, 14, 0, 0),
+        ),
+        ActivityLog(
+            organization_id=org2.id,
+            user_id=user2_3.id,
+            user_name=user2_3.name,
+            action="PRICE_NEGOTIATION",
+            entity_type="Price",
+            entity_id="101",
+            details="Согласование оптовой скидки с Coffee Roasters Almaty на зерно (7 500 ₸ вместо 8 200 ₸)",
+            created_at=datetime(2026, 8, 5, 16, 30, 0),
+        ),
+        ActivityLog(
+            organization_id=org2.id,
+            user_id=user2_2.id,
+            user_name=user2_2.name,
+            action="INVENTORY_AUDIT",
+            entity_type="Inventory",
+            entity_id="q3_audit",
+            details="Проведение плановой квартальной инвентаризации остатков склада (расхождений не выявлено)",
+            created_at=datetime(2026, 9, 30, 18, 0, 0),
+        ),
+        ActivityLog(
+            organization_id=org2.id,
+            user_id=user2.id,
+            user_name=user2.name,
+            action="SECURITY_AUDIT",
+            entity_type="Security",
+            entity_id="audit_2026",
+            details="Плановый аудит учетных записей и прав доступа сотрудников в системе BizMind",
+            created_at=datetime(2026, 10, 15, 10, 0, 0),
+        ),
+    ])
     db.flush()
 
     # Suppliers for Org 2 (IDs 101-110)

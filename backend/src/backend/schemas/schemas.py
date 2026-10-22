@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 # -------------------------------------------------------------------------
@@ -14,10 +14,30 @@ class OrganizationResponse(BaseModel):
     business_type: str
     currency: Optional[str] = "₸"
     alert_threshold_percent: Optional[float] = 5.0
+    price_alert_threshold_percent: Optional[float] = None
+    low_stock_days_threshold: Optional[int] = 5
     address: Optional[str] = None
     phone: Optional[str] = None
+    contact_phone: Optional[str] = None
     email: Optional[str] = None
-    created_at: datetime
+    contact_email: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def populate_aliases(self):
+        if self.price_alert_threshold_percent is None and self.alert_threshold_percent is not None:
+            self.price_alert_threshold_percent = self.alert_threshold_percent
+        elif self.alert_threshold_percent is None and self.price_alert_threshold_percent is not None:
+            self.alert_threshold_percent = self.price_alert_threshold_percent
+        if self.contact_phone is None:
+            self.contact_phone = self.phone
+        if self.phone is None:
+            self.phone = self.contact_phone
+        if self.contact_email is None:
+            self.contact_email = self.email
+        if self.email is None:
+            self.email = self.contact_email
+        return self
 
 
 class OrganizationSettingsUpdate(BaseModel):
@@ -25,9 +45,13 @@ class OrganizationSettingsUpdate(BaseModel):
     business_type: Optional[str] = None
     currency: Optional[str] = None
     alert_threshold_percent: Optional[float] = None
+    price_alert_threshold_percent: Optional[float] = None
+    low_stock_days_threshold: Optional[int] = None
     address: Optional[str] = None
     phone: Optional[str] = None
+    contact_phone: Optional[str] = None
     email: Optional[str] = None
+    contact_email: Optional[str] = None
 
 
 class OrganizationInfo(BaseModel):
@@ -288,9 +312,20 @@ class PurchaseResponse(BaseModel):
 
 class PurchaseOrderItemCreate(BaseModel):
     product_id: int
-    ordered_quantity: float
+    ordered_quantity: Optional[float] = None
+    quantity: Optional[float] = None
     unit_price: float
     unit: Optional[str] = None
+
+    @model_validator(mode="after")
+    def resolve_item_quantity(self):
+        if self.ordered_quantity is None and self.quantity is not None:
+            self.ordered_quantity = float(self.quantity)
+        if self.quantity is None and self.ordered_quantity is not None:
+            self.quantity = float(self.ordered_quantity)
+        if self.ordered_quantity is None or self.ordered_quantity <= 0:
+            raise ValueError("Количество должно быть больше нуля")
+        return self
 
 
 class PurchaseOrderItemResponse(BaseModel):
@@ -310,6 +345,7 @@ class PurchaseOrderItemResponse(BaseModel):
 class PurchaseOrderCreate(BaseModel):
     supplier_id: int
     order_date: date
+    expected_delivery_date: Optional[date] = None
     items: List[PurchaseOrderItemCreate]
     delivery_cost: float = 0.0
     notes: Optional[str] = None

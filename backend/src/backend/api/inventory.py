@@ -87,17 +87,18 @@ def write_off_stock(
 
 @router.get("/export")
 def export_inventory(
-    format: str = Query("xlsx", pattern="^(xlsx|csv)$"),
+    format: str = Query("xlsx", pattern="^(xlsx|csv|excel)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Экспорт текущих складских остатков в Excel или CSV."""
+    normalized_format = "xlsx" if format == "excel" else format
     content = InventoryService.export_inventory(
         db=db,
         organization_id=current_user.organization_id,
-        format_type=format,
+        format_type=normalized_format,
     )
-    if format == "csv":
+    if normalized_format == "csv":
         return Response(
             content=content,
             media_type="text/csv",

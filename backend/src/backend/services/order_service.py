@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 from fastapi import HTTPException, status
 from backend.models.models import (
     PurchaseOrder,
@@ -63,7 +63,11 @@ class OrderService:
     ) -> PurchaseOrderResponse:
         supplier = db.query(Supplier).filter(
             Supplier.id == data.supplier_id,
-            Supplier.organization_id == organization_id,
+            or_(
+                Supplier.organization_id == organization_id,
+                Supplier.organization_id.is_(None),
+                Supplier.is_global == True,
+            ),
         ).first()
         if not supplier:
             raise HTTPException(status_code=404, detail="Поставщик не найден")
