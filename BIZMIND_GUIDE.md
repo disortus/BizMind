@@ -124,21 +124,22 @@ BizMind/
 │   ├── nginx.conf                   # Конфиг Nginx для SPA и reverse-proxy /api/
 │   ├── Dockerfile                   # Multi-stage сборка Nginx + dist
 │   └── package.json                 # Зависимости frontend
-├── demo_data/                       # 8 подготовленных Excel-файлов
-│   ├── legacy_finances.xlsx         # Финансы Cafe Aroma
-│   ├── legacy_purchases.xlsx        # Закупки Cafe Aroma
-│   ├── legacy_inventory.xlsx        # Остатки Cafe Aroma
-│   ├── supplier_price_list.xlsx     # Прайс поставщиков Cafe Aroma
-│   ├── dailycup_finances.xlsx       # Финансы Daily Cup
-│   ├── dailycup_purchases.xlsx      # Закупки Daily Cup
-│   ├── dailycup_inventory.xlsx      # Остатки Daily Cup
-│   └── dailycup_supplier_prices.xlsx# Прайс поставщиков Daily Cup
+├── demo_data/                       # Образцы файлов Excel для онбординга
 ├── docker-compose.yml               # Оркестрация backend + frontend + volume
 ├── .dockerignore                    # Исключения сборки контейнеров
 ├── .env.example                     # Шаблон переменных окружения
+├── README.md                        # Главное описание проекта
 ├── BIZMIND_GUIDE.md                 # Настоящее подробное руководство
-├── DEPLOYMENT.md                    # Руководство по развертыванию на Linux
-└── README.md                        # Главное описание проекта
+├── docs/                            # 📚 Детальная документация подсистем
+│   ├── API.md                       # Полная спецификация REST API
+│   ├── USER_SCENARIOS.md            # 22 сквозных пошаговых сценария
+│   ├── DEMO_DATA.md                 # Описание демо-сценариев и каталога поставщиков
+│   ├── REPORT_BUILDER.md            # Спецификация конструктора отчетов
+│   ├── TESTING.md                   # Отчет о тестировании (36 тестов)
+│   ├── DEPLOYMENT.md                # Руководство по развертыванию на Linux VPS
+│   └── AUDIT.md                     # Архитектурный аудит и протокол доработок
+└── backend/
+    └── DATABASE.md                  # 🗄️ Полная документация архитектуры БД (15 моделей)
 ```
 
 ### 2.2. Поток данных и взаимодействие компонентов
@@ -438,9 +439,9 @@ graph TD
 
 ### 8.5. Заказы и закупки
 - `GET /api/orders`: Реестр заказов поставщикам со статусами (`draft`, `confirmed`, `received`, `cancelled`).
-- `POST /api/orders`: Создание нового заказа поставщику со спецификацией позиций.
+- `POST /api/orders`: Создание нового заказа поставщику с жесткой валидацией по каталогу и проверкой MOQ/MOA.
 - `GET /api/orders/{id}`: Детальная спецификация заказа.
-- `PUT /api/orders/{id}`: Редактирование черновика заказа.
+- `PUT /api/orders/{id}` и `PATCH /api/orders/{id}`: Редактирование позиций и количеств в черновике заказа.
 - `POST /api/orders/{id}/confirm`: Согласование и подтверждение заказа.
 - `POST /api/orders/{id}/receive`: Приемка поставки (автоматически создает приходное складское движение и фиксирует расход в финансах).
 - `POST /api/orders/{id}/cancel`: Отмена заказа.
@@ -448,35 +449,45 @@ graph TD
 - `GET /api/purchases`: Исторический журнал прошлых партий закупок.
 
 ### 8.6. Складской учет и движения
-- `GET /api/inventory/movements`: Хронологический журнал движений склада (`receipt`, `write_off`, `adjustment`, `initial`).
+- `GET /api/inventory`: Список текущих остатков с оценкой себестоимости и статусами запасов.
+- `GET /api/inventory/movements`: Хронологический журнал движений склада (`receipt`, `write_off`, `adjustment`, `initial_stock`).
 - `POST /api/inventory/adjust`: Проведение инвентаризации (фиксация фактического остатка и сохранение дельты).
 - `POST /api/inventory/write-off`: Списание брака, боя или порчи с обязательным указанием причины.
-- `GET /api/inventory/export?format={excel|csv}`: Экспорт ведомости остатков склада в Excel или CSV.
+- `GET /api/inventory/export?format={excel|csv}`: Экспорт ведомости остатков склада в Excel (`.xlsx`) или CSV.
 
 ### 8.7. Поставщики и сравнение
-- `GET /api/suppliers`: Список активных поставщиков организации с тарифами доставки и минимальным заказом.
-- `POST /api/suppliers`: Создание нового поставщика.
+- `GET /api/suppliers`: Список поставщиков организации + глобальный маркетплейс BizMind (`is_global = True`).
+- `POST /api/suppliers`: Создание нового локального поставщика.
 - `PUT /api/suppliers/{id}`: Обновление реквизитов поставщика.
+- `GET /api/suppliers/{id}/catalog`: ⭐ **Каталог товаров выбранного поставщика с заблокированными ценами и квантами MOQ**.
 - `GET /api/suppliers/{id}/offers`: Список коммерческих предложений поставщика.
-- `POST /api/suppliers/{id}/offers`: Добавление предложения поставщика на товар с сохранением в историю цен.
+- `POST /api/suppliers/{id}/offers`: Добавление предложения поставщика на товар с фиксацией в истории цен.
 - `GET /api/suppliers/comparison?product_id={id}&quantity={qty}`: Расчет сравнения: цена текущей закупки, альтернативные предложения, лучшее предложение, разница за единицу и партию, флаг устаревания прайса (`is_stale`).
+- `GET /api/suppliers/price-history`: Динамика изменения цен поставщиков.
 
-### 8.8. Прогноз
+### 8.8. Конструктор отчетов (Report Builder)
+- `GET /api/reports/templates`: Список системных пресетов и пользовательских шаблонов.
+- `POST /api/reports/templates`: Сохранение новой конфигурации шаблона.
+- `PUT /api/reports/templates/{id}`: Обновление параметров отчета.
+- `POST /api/reports/generate`: Расчет аналитических показателей и серий графиков по JSON-конфигурации.
+- `POST /api/reports/export`: Выгрузка сформированного отчета в Excel (`.xlsx`) со стилями или CSV.
+
+### 8.9. Прогноз остатков
 - `GET /api/forecast`: Статистический расчет расхода сырья, текущий остаток, среднесуточное потребление, прогноз на 7/14/30 дней, честный статус `insufficient_data` при нехватке истории.
 
-### 8.9. Уведомления
+### 8.10. Уведомления
 - `GET /api/notifications?unread_only={bool}&limit={int}`: Список алертов организации (скачки цен, дефицит, черновики заказов).
 - `POST /api/notifications/{id}/read`: Отметка алерта прочитанным.
 - `POST /api/notifications/read-all`: Отметка всех алертов организации прочитанными.
 
-### 8.10. Настройки, пользователи и аудит
+### 8.11. Настройки, сотрудники и аудит
 - `GET /api/settings/organization`: Реквизиты и параметры организации (порог алертов, валюта, контакты).
 - `PUT /api/settings/organization`: Сохранение измененных настроек.
-- `GET /api/settings/users`: Список сотрудников и их ролей.
-- `POST /api/settings/users`: Регистрация нового сотрудника (только для роли Owner, пароль хешируется).
-- `GET /api/settings/activity`: Неизменяемый системный журнал аудита безопасности.
+- `GET /api/settings/employees`: Список учетных записей сотрудников и их ролей.
+- `POST /api/settings/employees`: Добавление сотрудника (с поддержкой генератора надежных паролей и хеширования PBKDF2-HMAC-SHA256).
+- `GET /api/settings/audit-logs`: Неизменяемый системный журнал аудита безопасности.
 
-### 8.11. Импорт и демо-контроль
+### 8.12. Импорт и демо-контроль
 - `GET /api/import/templates/{import_type}?format={excel|csv}`: Скачивание чистого размеченного шаблона для заполнения.
 - `POST /api/import/preview`: Парсинг загруженного файла, валидация колонок, возврат превью первых строк.
 - `POST /api/import/execute`: Исполнение импорта с построчным протоколом ошибок и дедупликацией.
@@ -484,6 +495,10 @@ graph TD
 - `POST /api/demo/reset`: Сброс базы данных и повторное детерминированное заполнение обоих сценариев.
 - `GET /api/demo/sample-files`: Список файлов-образцов для текущей организации.
 - `GET /api/demo/files/{filename}`: Скачивание Excel-файла образца.
+
+> 💡 Полная интерактивная документация доступна в Swagger UI (`/docs`) и в файле [docs/API.md](docs/API.md).  
+> 🗄️ Описание структуры базы данных и связей таблиц доступно в [backend/DATABASE.md](backend/DATABASE.md).
+
 
 ---
 
