@@ -87,28 +87,28 @@ def test_cross_tenant_isolation_protection():
     """Verify that Org 2 cannot read or manipulate Org 1 resources via direct ID."""
     db = SessionLocal()
     try:
-        org1_prod = db.query(Product).filter(Product.organization_id == 1).first()
-        assert org1_prod is not None
+        org2_prod = db.query(Product).filter(Product.organization_id == 2).first()
+        assert org2_prod is not None
 
-        # Org 2 attempts to fetch Org 1 product
+        # Org 1 attempts to fetch Org 2 product
         res = client.get(
-            f"/api/products/{org1_prod.id}",
-            headers={"X-Organization-Id": "2"},
+            f"/api/products/{org2_prod.id}",
+            headers={"X-Organization-Id": "1"},
         )
         assert res.status_code == 404
 
-        # Org 2 attempts to update Org 1 product
+        # Org 1 attempts to update Org 2 product
         update_res = client.put(
-            f"/api/products/{org1_prod.id}",
-            headers={"X-Organization-Id": "2"},
+            f"/api/products/{org2_prod.id}",
+            headers={"X-Organization-Id": "1"},
             json={"name": "Stolen Coffee", "category": "Кофе", "unit": "кг", "minimum_stock": 5.0},
         )
         assert update_res.status_code == 404
 
-        # Org 2 attempts to delete Org 1 product
+        # Org 1 attempts to delete Org 2 product
         del_res = client.delete(
-            f"/api/products/{org1_prod.id}",
-            headers={"X-Organization-Id": "2"},
+            f"/api/products/{org2_prod.id}",
+            headers={"X-Organization-Id": "1"},
         )
         assert del_res.status_code == 404
     finally:
