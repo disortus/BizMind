@@ -119,7 +119,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
         <div className="space-y-3">
           {notifications.map((n) => {
             const action = getActionTarget(n);
-            const isDanger = n.severity === 'danger';
+            const isDanger = n.severity === 'danger' || n.severity === 'critical';
             const isWarning = n.severity === 'warning';
             const isSuccess = n.severity === 'success';
 

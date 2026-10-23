@@ -384,14 +384,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
               className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded font-semibold text-[11px] ${
                 data.expenses_change_percent > 0
                   ? 'bg-rose-500/15 text-rose-300'
-                  : 'bg-emerald-500/15 text-emerald-300'
+                  : data.expenses_change_percent < 0
+                  ? 'bg-emerald-500/15 text-emerald-300'
+                  : 'bg-slate-700/30 text-slate-400'
               }`}
             >
               {data.expenses_change_percent > 0 ? (
                 <TrendingUp className="w-3 h-3" />
-              ) : (
+              ) : data.expenses_change_percent < 0 ? (
                 <TrendingDown className="w-3 h-3" />
-              )}
+              ) : null}
               {formatPercent(data.expenses_change_percent)}
             </span>
             <span className="text-slate-400 text-[11px]">к пред. периоду</span>
@@ -862,7 +864,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
                       Анализ скачка цен на кофе
                     </div>
                     <div className="text-[11px] text-slate-400 leading-tight">
-                      Рост цены зерна +15% (12 000 → 13 800 ₸)
+                      Рост цены зерна +15% (10 000 → 11 500 ₸)
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />
@@ -879,7 +881,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ period, onNavigate
                       Сопоставление поставщиков
                     </div>
                     <div className="text-[11px] text-slate-400 leading-tight">
-                      Экономия 36 000 ₸ с Kazakh Coffee Roasters
+                      Экономия 23 000 ₸ с Aroma Direct (10 350 ₸)
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition shrink-0 mt-0.5" />

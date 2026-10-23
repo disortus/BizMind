@@ -155,7 +155,7 @@ class ComparisonService:
             offer_items.append(item)
 
             # Filter for best offer (excluding current supplier if offer belongs to current)
-            if unit_diff > 0 and not is_stale:
+            if unit_diff > 0 and not is_stale and (current_supplier_id is None or o.supplier_id != current_supplier_id):
                 if best_offer is None or item.total_difference_with_delivery > best_offer.total_difference_with_delivery:
                     best_offer = item
 

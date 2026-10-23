@@ -353,7 +353,7 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
             action="SWITCH_SUPPLIER",
             entity_type="Supplier",
             entity_id="102",
-            details="Оптимизация упаковки: смена поставщика на EcoTorg Kazakhstan (1 230 ₸/упак, подтвержденная экономия 34 200 ₸)",
+            details="Оптимизация упаковки: смена поставщика стаканов 350мл на EcoTorg Kazakhstan (1 380 ₸/упак, подтвержденная экономия 34 200 ₸)",
             created_at=datetime(2026, 8, 1, 14, 0, 0),
         ),
         ActivityLog(
@@ -479,18 +479,20 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
 
     # 6-Month Purchases for Daily Cup (May to October 2026):
     # Demonstrating real optimization:
-    # 1. Kraft Cups: May-July purchased from PackGroup at 1 420 ₸. Aug-Oct switched to EcoTorg at 1 230 ₸ (-190 ₸/pack).
-    # 2. Coffee: May-July purchased at 8 200 ₸/kg. In August negotiated volume contract to 7 500 ₸/kg (-700 ₸/kg).
-    # 3. Milk: May-July purchased at 520 ₸/L. In August negotiated contract to 470 ₸/L (-50 ₸/L).
+    # 1. Kraft Cups 250ml: PackGroup Almaty supplied at 1 200 ₸. 4 days ago raised to 1 420 ₸ (+18.3% spike!). EcoTorg is available at 1 230 ₸ (-190 ₸/pack).
+    # 2. Kraft Cups 350ml: May-July purchased from PackGroup at 1 570 ₸. Aug-Oct switched to EcoTorg at 1 380 ₸ (180 packs * 190 = 34 200 ₸ Realized Savings!).
+    # 3. Coffee Daily Blend: May-July purchased at 8 200 ₸/kg. In August negotiated volume contract to 7 500 ₸/kg (120 kg * 700 = 84 000 ₸ Realized Savings!).
+    # 4. Milk: May-July purchased at 520 ₸/L. In August negotiated contract to 470 ₸/L (700 L * 50 = 35 000 ₸ Realized Savings!).
+    # Total verified realized savings: 34 200 + 84 000 + 35 000 = 153 200 ₸.
     purchases2_records = [
         # --- PHASE 1 (Initial Months: May - July) ---
-        # Kraft cups 250ml (prod 101) from PackGroup Almaty (sup 101) at high price 1420 ₸
-        (101, 101, today - timedelta(days=150), 60.0, "упак", 1420.0, 85200.0),
-        (101, 101, today - timedelta(days=120), 60.0, "упак", 1420.0, 85200.0),
-        (101, 101, today - timedelta(days=90), 60.0, "упак", 1420.0, 85200.0),
-        # Kraft cups 350ml (prod 102) from PackGroup Almaty
-        (102, 101, today - timedelta(days=140), 40.0, "упак", 1450.0, 58000.0),
-        (102, 101, today - timedelta(days=95), 40.0, "упак", 1450.0, 58000.0),
+        # Kraft cups 250ml (prod 101) from PackGroup Almaty (sup 101) at normal price 1 200 ₸
+        (101, 101, today - timedelta(days=150), 60.0, "упак", 1200.0, 72000.0),
+        (101, 101, today - timedelta(days=120), 60.0, "упак", 1200.0, 72000.0),
+        (101, 101, today - timedelta(days=90), 60.0, "упак", 1200.0, 72000.0),
+        # Kraft cups 350ml (prod 102) from PackGroup Almaty at baseline 1 570 ₸
+        (102, 101, today - timedelta(days=140), 60.0, "упак", 1570.0, 94200.0),
+        (102, 101, today - timedelta(days=95), 60.0, "упак", 1570.0, 94200.0),
         # Coffee Daily Blend (prod 105) from Silk Road Coffee (sup 104) at 8 200 ₸
         (105, 104, today - timedelta(days=155), 40.0, "кг", 8200.0, 328000.0),
         (105, 104, today - timedelta(days=125), 40.0, "кг", 8200.0, 328000.0),
@@ -504,24 +506,29 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
         (104, 101, today - timedelta(days=80), 20.0, "упак", 850.0, 17000.0),
 
         # --- PHASE 2 (BizMind Optimization Months: August - October) ---
-        # Kraft cups 250ml: SWITCHED to EcoTorg (sup 102) at 1 230 ₸ (Savings: 190 ₸/pack!)
-        # 3 batches * 60 = 180 packs * 190 = 34 200 ₸ Realized Savings!
-        (101, 102, today - timedelta(days=60), 60.0, "упак", 1230.0, 73800.0),
-        (101, 102, today - timedelta(days=30), 60.0, "упак", 1230.0, 73800.0),
-        (101, 102, today - timedelta(days=5), 60.0, "упак", 1230.0, 73800.0),
-        # Kraft cups 350ml from EcoTorg at 1 380 ₸
-        (102, 102, today - timedelta(days=50), 40.0, "упак", 1380.0, 55200.0),
-        (102, 102, today - timedelta(days=12), 40.0, "упак", 1380.0, 55200.0),
+        # Kraft cups 250ml: PackGroup was stable at 1 200 ₸ until the recent sudden price spike (+18.3%)!
+        (101, 101, today - timedelta(days=60), 60.0, "упак", 1200.0, 72000.0),
+        (101, 101, today - timedelta(days=30), 60.0, "упак", 1200.0, 72000.0),
+        # Sudden price jump to 1 420 ₸ (4 days ago) -> Triggers Price Alert Banner (+18.3%)!
+        (101, 101, today - timedelta(days=4), 60.0, "упак", 1420.0, 85200.0),
+
+        # Kraft cups 350ml: SWITCHED to EcoTorg at 1 380 ₸ (Savings: 190 ₸/pack! 180 * 190 = 34 200 ₸ Realized Savings!)
+        (102, 102, today - timedelta(days=60), 60.0, "упак", 1380.0, 82800.0),
+        (102, 102, today - timedelta(days=30), 60.0, "упак", 1380.0, 82800.0),
+        (102, 102, today - timedelta(days=12), 60.0, "упак", 1380.0, 82800.0),
+
         # Coffee Daily Blend: NEGOTIATED volume contract with Silk Road Coffee to 7 500 ₸!
         # 3 batches * 40 kg = 120 kg * 700 = 84 000 ₸ Realized Savings!
         (105, 104, today - timedelta(days=65), 40.0, "кг", 7500.0, 300000.0),
         (105, 104, today - timedelta(days=35), 40.0, "кг", 7500.0, 300000.0),
         (105, 104, today - timedelta(days=8), 40.0, "кг", 7500.0, 300000.0),
+
         # Milk Parmalat: NEGOTIATED wholesale rate to 470 ₸!
         # 700 L * 50 = 35 000 ₸ Realized Savings!
         (106, 105, today - timedelta(days=60), 200.0, "л", 470.0, 94000.0),
         (106, 105, today - timedelta(days=35), 250.0, "л", 470.0, 117500.0),
         (106, 105, today - timedelta(days=6), 250.0, "л", 470.0, 117500.0),
+
         # Oat milk Alpro (prod 107) from Healthy Drinks Almaty
         (107, 106, today - timedelta(days=45), 20.0, "л", 1150.0, 23000.0),
         (107, 106, today - timedelta(days=10), 20.0, "л", 1150.0, 23000.0),
@@ -555,6 +562,9 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
         {"product_id": 101, "supplier_id": 101, "price": 1420.0, "unit": "упак", "delivery": 1500.0, "moq": 20.0, "price_source": "user_import"},
         {"product_id": 101, "supplier_id": 102, "price": 1230.0, "unit": "упак", "delivery": 0.0, "moq": 30.0, "price_source": "user_import"},
         {"product_id": 101, "supplier_id": 103, "price": 1290.0, "unit": "упак", "delivery": 1000.0, "moq": 20.0, "price_source": "catalog"},
+        # Kraft cups 350ml: PackGroup (1570) vs EcoTorg (1380)
+        {"product_id": 102, "supplier_id": 101, "price": 1570.0, "unit": "упак", "delivery": 1500.0, "moq": 20.0, "price_source": "user_import"},
+        {"product_id": 102, "supplier_id": 102, "price": 1380.0, "unit": "упак", "delivery": 0.0, "moq": 30.0, "price_source": "user_import"},
         # Coffee Daily Blend
         {"product_id": 105, "supplier_id": 104, "price": 7500.0, "unit": "кг", "delivery": 0.0, "moq": 40.0, "price_source": "user_import"},
         # Milk Parmalat
@@ -681,11 +691,19 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
     # Legitimate Notifications for Daily Cup
     notifs2_data = [
         {
+            "title": "Обнаружен рост цен: стаканы Kraft 250мл (+18.3%)",
+            "description": "Поставщик PackGroup Almaty поднял цену с 1 200 до 1 420 ₸/упак. Рекомендуется перейти на EcoTorg Kazakhstan (1 230 ₸/упак, экономия 190 ₸/упак).",
+            "severity": "critical",
+            "notification_type": "price_spike",
+            "related_product_id": 101,
+            "created_at": datetime.combine(today - timedelta(days=4), datetime.min.time()),
+        },
+        {
             "title": "Достигнута подтвержденная экономия 153 200 ₸",
-            "description": "Благодаря оптимизации закупок в BizMind: смена поставщика стаканов (34 200 ₸), скидка на кофе (84 000 ₸) и молоко (35 000 ₸).",
+            "description": "Благодаря оптимизации закупок в BizMind: смена поставщика стаканов 350мл (34 200 ₸), скидка на кофе (84 000 ₸) и молоко (35 000 ₸).",
             "severity": "success",
             "notification_type": "expense_change",
-            "related_product_id": 101,
+            "related_product_id": 102,
             "created_at": datetime.combine(today - timedelta(days=5), datetime.min.time()),
         },
         {
@@ -754,3 +772,14 @@ def reset_and_seed_db(db: Session) -> Dict[str, Any]:
         "global_suppliers_count": len(global_suppliers_data),
         "preset_templates_count": len(preset_templates),
     }
+
+
+if __name__ == "__main__":
+    db = SessionLocal()
+    try:
+        print("Resetting and seeding database...")
+        res = reset_and_seed_db(db)
+        print(f"Success! {res['message']}")
+        print(f"Org 2 Realized Savings: {res['org2_daily_cup']['realized_savings_kzt']} ₸")
+    finally:
+        db.close()

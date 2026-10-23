@@ -94,7 +94,9 @@ export const ProductHistoryModal: React.FC<ProductHistoryModalProps> = ({
                 >
                   {(data.price_change_percent || 0) > 0 && <TrendingUp className="w-4 h-4" />}
                   {(data.price_change_percent || 0) < 0 && <TrendingDown className="w-4 h-4" />}
-                  {data.price_change_percent !== null ? formatPercent(data.price_change_percent) : '0%'}
+                  {data.price_change_percent !== null && data.price_change_percent !== undefined
+                    ? formatPercent(data.price_change_percent)
+                    : '—'}
                 </div>
                 <div className="text-[10px] text-slate-500">к прошлой закупке</div>
               </div>
