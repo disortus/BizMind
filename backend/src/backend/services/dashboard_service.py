@@ -245,22 +245,49 @@ class DashboardService:
                 target_product_id = spike_notif.related_product_id
                 target_prod = db.query(Product).filter(Product.id == target_product_id).first()
                 if target_prod and "стакан" in target_prod.name.lower():
-                    target_quantity = 50.0
+                    target_quantity = 60.0
                 elif target_prod and "молоко" in target_prod.name.lower():
                     target_quantity = 60.0
                 else:
                     target_quantity = 20.0
             else:
-                # Fallback to first product that has offers
-                prod_with_offers = db.query(Product).join(
-                    SupplierOffer,
-                    SupplierOffer.product_id == Product.id
-                ).filter(
-                    Product.organization_id == organization_id
-                ).first()
-                if prod_with_offers:
-                    target_product_id = prod_with_offers.id
-                    target_quantity = 20.0
+                # Intelligent fallback: find a product that has an ACTUAL price spike or ACTUAL cheaper alternative
+                org_products = db.query(Product).filter(
+                    Product.organization_id == organization_id,
+                    Product.is_active == True,
+                ).all()
+
+                best_candidate_id = None
+                best_candidate_qty = 20.0
+                best_candidate_score = -1.0
+
+                for prod in org_products:
+                    p_qty = 60.0 if "стакан" in prod.name.lower() or "молоко" in prod.name.lower() else 20.0
+                    comp = ComparisonService.compare_product_offers(
+                        db=db,
+                        product_id=prod.id,
+                        quantity=p_qty,
+                        organization_id=organization_id,
+                    )
+                    if not comp:
+                        continue
+
+                    # Higher score for actual positive price spikes (> 0%), followed by savings magnitude
+                    if comp.price_change_percent and comp.price_change_percent > 0:
+                        score = 10000.0 + comp.price_change_percent
+                    elif comp.best_offer and comp.best_offer.unit_difference > 0:
+                        score = comp.best_offer.total_difference
+                    else:
+                        score = -1.0
+
+                    if score > best_candidate_score:
+                        best_candidate_score = score
+                        best_candidate_id = prod.id
+                        best_candidate_qty = p_qty
+
+                if best_candidate_id and best_candidate_score > 0:
+                    target_product_id = best_candidate_id
+                    target_quantity = best_candidate_qty
 
             if target_product_id:
                 featured_comp = ComparisonService.compare_product_offers(

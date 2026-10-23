@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ArrowLeftRight,
   TrendingUp,
+  TrendingDown,
   AlertTriangle,
   CheckCircle,
   Truck,
@@ -301,10 +302,16 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                             Текущее состояние закупки
                           </span>
-                          {comparison.price_change_percent && comparison.price_change_percent > 0 && (
+                          {comparison.price_change_percent !== null && comparison.price_change_percent !== undefined && comparison.price_change_percent > 0 && (
                             <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
                               <TrendingUp className="w-3.5 h-3.5" />
                               Повышение цены {formatPercent(comparison.price_change_percent)}
+                            </span>
+                          )}
+                          {comparison.price_change_percent !== null && comparison.price_change_percent !== undefined && comparison.price_change_percent < 0 && (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                              <TrendingDown className="w-3.5 h-3.5" />
+                              Снижение цены {formatPercent(comparison.price_change_percent)}
                             </span>
                           )}
                         </div>
@@ -328,8 +335,20 @@ export const ComparisonPage: React.FC<ComparisonPageProps> = ({
                         <div className="hidden sm:block w-px h-8 bg-[#243045]"></div>
 
                         <div>
-                          <div className="text-[11px] text-slate-400">Новая цена закупки</div>
-                          <div className="text-xl font-bold font-mono text-rose-400 mt-0.5">
+                          <div className="text-[11px] text-slate-400">
+                            {comparison.price_change_percent && comparison.price_change_percent > 0
+                              ? 'Новая цена закупки'
+                              : comparison.price_change_percent && comparison.price_change_percent < 0
+                              ? 'Сниженная цена'
+                              : 'Текущая цена закупки'}
+                          </div>
+                          <div className={`text-xl font-bold font-mono mt-0.5 ${
+                            comparison.price_change_percent && comparison.price_change_percent > 0
+                              ? 'text-rose-400'
+                              : comparison.price_change_percent && comparison.price_change_percent < 0
+                              ? 'text-emerald-400'
+                              : 'text-white'
+                          }`}>
                             {formatTenge(comparison.current_unit_price)}
                           </div>
                           <div className="text-[10px] text-slate-500">за 1 {comparison.unit}</div>

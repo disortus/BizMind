@@ -180,7 +180,7 @@ export interface NotificationItem {
   id: number;
   title: string;
   description: string;
-  severity: 'warning' | 'info' | 'danger' | 'success';
+  severity: 'warning' | 'info' | 'danger' | 'critical' | 'success';
   notification_type: 'price_spike' | 'alternative_offer' | 'low_stock' | 'expense_change';
   related_product_id?: number | null;
   is_read: boolean;

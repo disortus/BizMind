@@ -543,7 +543,9 @@ class ReportService:
             # In Daily Cup: EcoTorg cups saved 190 ₸/pack, Coffee saved 700 ₸/kg, Milk saved 50 ₸/L
             realized_savings = 0.0
             for p in purchases:
-                if p.product and "стакан" in p.product.name.lower() and p.unit_price < 1420.0:
+                if p.product and "350" in p.product.name and p.unit_price < 1570.0:
+                    realized_savings += (1570.0 - p.unit_price) * p.quantity
+                elif p.product and "стакан" in p.product.name.lower() and "250" not in p.product.name and p.unit_price < 1420.0:
                     realized_savings += (1420.0 - p.unit_price) * p.quantity
                 elif p.product and "кофе" in p.product.name.lower() and p.unit_price < 8200.0:
                     realized_savings += (8200.0 - p.unit_price) * p.quantity
@@ -859,7 +861,9 @@ class ReportService:
             # Verified savings
             realized_savings = 0.0
             for p in purchases:
-                if p.product and "стакан" in p.product.name.lower() and p.unit_price < 1420.0:
+                if p.product and "350" in p.product.name and p.unit_price < 1570.0:
+                    realized_savings += (1570.0 - p.unit_price) * p.quantity
+                elif p.product and "стакан" in p.product.name.lower() and "250" not in p.product.name and p.unit_price < 1420.0:
                     realized_savings += (1420.0 - p.unit_price) * p.quantity
                 elif p.product and "кофе" in p.product.name.lower() and p.unit_price < 8200.0:
                     realized_savings += (8200.0 - p.unit_price) * p.quantity

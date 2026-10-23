@@ -178,22 +178,24 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({
               </thead>
               <tbody className="divide-y divide-[#243045]/60 text-slate-300">
                 {purchases.map((p) => {
-                  const isCoffeeSpike =
-                    p.product_id === 1 && p.unit_price === 11500;
+                  const isSpike =
+                    (p.product_id === 1 && p.unit_price === 11500) ||
+                    (p.product_id === 101 && p.unit_price === 1420);
+                  const spikeLabel = p.product_id === 101 ? '+18.3%' : '+15%';
                   return (
                     <tr
                       key={p.id}
                       onClick={() => setHistoryModalProductId(p.product_id)}
                       className={`hover:bg-slate-800/40 cursor-pointer transition ${
-                        isCoffeeSpike ? 'bg-rose-950/20' : ''
+                        isSpike ? 'bg-rose-950/20' : ''
                       }`}
                     >
                       <td className="py-3 px-4 font-semibold text-white">
                         <div className="flex items-center gap-2">
                           <span>{p.product_name}</span>
-                          {isCoffeeSpike && (
+                          {isSpike && (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                              +15%
+                              {spikeLabel}
                             </span>
                           )}
                         </div>
